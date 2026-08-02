@@ -1,0 +1,40 @@
+name: 每日招聘信息抓取
+
+on:
+  schedule:
+    - cron: '0 0 * * *'   # UTC 00:00 = 北京时间 08:00
+  workflow_dispatch:       # 支持手动触发试跑
+
+env:
+  DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+  SERVERCHAN_SENDKEY: ${{ secrets.SERVERCHAN_SENDKEY }}
+
+jobs:
+  daily-job-search:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 安装项目依赖
+        run: npm install
+
+      - name: 安装 opencode
+        run: npm install -g opencode-ai
+
+      - name: 运行每日任务（AI 抓取 + 智能匹配）
+        run: |
+          opencode run --auto --format json < .opencode/daily-search-prompt.md
+
+      - name: 提交结果
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add 求职记录_血管支架.csv config/portals.yml
+          git commit -m "自动更新招聘信息 $(date +%F)" --allow-empty
+          git push
