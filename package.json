@@ -1,0 +1,34 @@
+{
+  "name": "job-search-vascular-stent",
+  "version": "1.0.0",
+  "description": "求职管理项目 - 招聘咨询与管理",
+  "main": "index.js",
+  "scripts": {
+    "search": "node search-engine.cjs daily",
+    "append": "node search-engine.cjs append",
+    "summary": "node search-engine.cjs summary",
+    "check": "node search-engine.cjs check",
+    "cleanup": "node search-engine.cjs cleanup",
+    "notify": "node notify-job.cjs",
+    "match": "node search-engine.cjs match new-jobs.json",
+    "export": "node search-engine.cjs export",
+    "backfill": "node search-engine.cjs backfill",
+    "daily": "node search-engine.cjs cleanup && opencode run --auto --format json < .opencode/daily-search-prompt.md",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "job-search",
+    "recruitment",
+    "opencode"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@freely01/opencode-notify": "^0.5.2",
+    "@openpets/excel": "^1.0.1",
+    "exceljs": "^4.4.0",
+    "job-forge": "^2.14.81",
+    "js-yaml": "^5.2.2"
+  }
+}

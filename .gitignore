@@ -1,0 +1,15 @@
+node_modules/
+daily-log.txt
+serverchan.key
+*.xlsx
+*.xls
+*.backup-*.cjs
+*.backup-*.md
+*-backup-*.cjs
+*-backup-*.md
+backfill-input.json
+backfill-result.json
+new-jobs.json
+match-output.json
+.opencode/logs/
+*.log

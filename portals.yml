@@ -1,0 +1,274 @@
+# Portal Scanner Configuration
+# 血管支架/介入医疗器械 招聘信息来源配置
+# 每日全量重搜模式：所有启用的查询/高校/公众号/企业每日都会检索，靠 Excel 去重
+
+title_filter:
+  positive:
+    - "血管支架"
+    - "介入"
+    - "医疗器械"
+    - "生物医用"
+    - "支架"
+    - "研发"
+    - "材料"
+    - "可降解"
+    - "球囊"
+    - "导管"
+    - "镍钛"
+    - "钴铬合金"
+    - "瓣膜"
+    - "封堵器"
+    - "神经介入"
+    - "冠脉"
+    - "外周"
+    - "药物涂层"
+    - "输送系统"
+    - "校园招聘"
+    - "应届生"
+    - "校招"
+  negative:
+    - "实习"
+    - "初级"
+    - "销售"
+    - "市场"
+    - "行政"
+    - "财务"
+    - "人事"
+    - "实习生"
+
+search_queries:
+  # --- 主流招聘平台（原有） ---
+  - name: "猎聘网 — 血管介入研发"
+    query: 'site:liepin.com 血管支架 OR 介入器械 OR 全降解支架 研发'
+    enabled: true
+  - name: "前程无忧 — 医疗器械研发"
+    query: 'site:51job.com 医疗器械 OR 介入器械 OR 血管支架 研发'
+    enabled: true
+  - name: "智联招聘 — 支架研发"
+    query: 'site:zhaopin.com 血管支架 OR 全降解支架 OR 介入器械 研发'
+    enabled: true
+  - name: "猎聘网 — 材料研发"
+    query: 'site:liepin.com 医疗器械 生物医用材料 OR 生物相容性 研发工程师'
+    enabled: true
+  - name: "前程无忧 — 介入耗材"
+    query: 'site:51job.com 介入耗材 OR 球囊 OR 导管 研发'
+    enabled: true
+  - name: "智联招聘 — 医疗器械研发"
+    query: 'site:zhaopin.com 医疗器械 研发工程师 OR 介入 研发'
+    enabled: true
+  - name: "BOSS直聘 — 血管介入"
+    query: 'site:zhipin.com 血管支架 OR 介入器械 研发'
+    enabled: true
+  - name: "BOSS直聘 — 医疗器械"
+    query: 'site:zhipin.com 医疗器械 研发 支架 OR 介入'
+    enabled: true
+  - name: "猎聘网 — 神经介入"
+    query: 'site:liepin.com 神经介入 支架 OR 密网支架 OR 取栓支架'
+    enabled: true
+  - name: "智联招聘 — 可降解支架"
+    query: 'site:zhaopin.com 可降解支架 OR 全降解 冠脉支架 OR 药物球囊'
+    enabled: true
+
+  # --- 国家级平台 ---
+  - name: "国家大学生就业服务平台 — 血管介入"
+    query: 'site:ncss.cn 血管支架 OR 介入 OR 医疗器械 校园招聘 OR 应届生'
+    enabled: true
+  - name: "中国公共招聘网 — 医疗器械研发"
+    query: 'site:mohrss.gov.cn 医疗器械 OR 介入 OR 生物医用材料 招聘'
+    enabled: true
+  - name: "国聘网 — 血管支架研发"
+    query: 'site:iguopin.com 血管支架 OR 介入器械 OR 医疗器械 研发'
+    enabled: true
+  - name: "高校人才网 — 生物医用材料"
+    query: 'site:gaoxiaojob.com 生物医用材料 OR 介入器械 OR 医疗器械 研发'
+    enabled: true
+
+  # --- 目标高校就业网 ---
+  - name: "中科院大学就业网 — 医疗器械"
+    query: 'site:job.ucas.ac.cn 医疗器械 OR 生物医学 OR 研发 招聘'
+    enabled: true
+  - name: "清华就业网 — 医疗器械"
+    query: 'site:career.tsinghua.edu.cn 医疗器械 OR 生物医学 OR 介入 招聘'
+    enabled: true
+  - name: "北大就业网 — 医疗器械"
+    query: 'site:scc.pku.edu.cn 医疗器械 OR 生物医学 OR 研发 招聘'
+    enabled: true
+  - name: "浙大就业网 — 医疗器械"
+    query: 'site:career.zju.edu.cn 医疗器械 OR 生物医学 OR 介入 招聘'
+    enabled: true
+  - name: "川大就业网 — 医疗器械"
+    query: 'site:jy.scu.edu.cn 医疗器械 OR 生物医学 OR 研发 招聘'
+    enabled: true
+  - name: "上海交大就业网 — 医疗器械"
+    query: 'site:job.sjtu.edu.cn 医疗器械 OR 生物医学 OR 介入 招聘'
+    enabled: true
+  - name: "武大就业网 — 医疗器械"
+    query: 'site:xsjy.whu.edu.cn 医疗器械 OR 生物医学 OR 研发 招聘'
+    enabled: true
+  - name: "北京化工大学就业网 — 医疗器械"
+    query: 'site:career.buct.edu.cn 医疗器械 OR 生物医学 OR 材料 招聘'
+    enabled: true
+  - name: "吉林大学就业网 — 医疗器械"
+    query: 'site:jdjyw.jlu.edu.cn 医疗器械 OR 生物医学 OR 研发 招聘'
+    enabled: true
+  - name: "北师大就业网 — 医疗器械"
+    query: 'site:career.bnu.edu.cn 医疗器械 OR 生物医学 OR 研发 招聘'
+    enabled: true
+  - name: "中科大就业网 — 医疗器械"
+    query: 'site:job.ustc.edu.cn 医疗器械 OR 生物医学 OR 研发 招聘'
+    enabled: true
+
+  # --- 主流招聘平台（新增） ---
+  - name: "应届生求职网 — 血管介入"
+    query: 'site:yingjiesheng.com 血管支架 OR 介入 OR 医疗器械 研发 应届生'
+    enabled: true
+  - name: "丁香人才 — 医疗器械研发"
+    query: 'site:jobmd.cn 医疗器械 OR 介入器械 OR 血管支架 研发'
+    enabled: true
+  - name: "生物谷 — 医疗器械招聘"
+    query: 'site:bioon.com 医疗器械 OR 生物医用材料 研发 招聘'
+    enabled: true
+  - name: "医药魔方 — 医疗器械招聘"
+    query: 'site:pharmcube.com 医疗器械 OR 心血管介入 招聘 OR 研发'
+    enabled: true
+  - name: "医药英才网 — 介入器械研发"
+    query: 'site:healthr.com 介入 OR 医疗器械 OR 血管支架 研发'
+    enabled: true
+
+  # --- 微信公众号 ---
+  - name: "公众号 — 高校人才网V"
+    query: 'site:mp.weixin.qq.com "高校人才网V" 医疗器械 OR 生物医学 OR 研发'
+    enabled: true
+  - name: "公众号 — 高才医学"
+    query: 'site:mp.weixin.qq.com "高才医学" 医疗器械 OR 介入 OR 研发'
+    enabled: true
+  - name: "公众号 — BioArt"
+    query: 'site:mp.weixin.qq.com "BioArt" 医疗器械 OR 生物医学 OR 博后 OR 招聘'
+    enabled: true
+  - name: "公众号 — iNature"
+    query: 'site:mp.weixin.qq.com "iNature" 医疗器械 OR 生物材料 OR 招聘'
+    enabled: true
+  - name: "公众号 — 生物制药小编"
+    query: 'site:mp.weixin.qq.com "生物制药小编" 医疗器械 OR 介入 OR 研发'
+    enabled: true
+  - name: "公众号 — 生物探索"
+    query: 'site:mp.weixin.qq.com "生物探索" 医疗器械 OR 生物医用材料 OR 招聘'
+    enabled: true
+  - name: "公众号 — 成功就业"
+    query: 'site:mp.weixin.qq.com "成功就业" 医疗器械 OR 生物医学 OR 招聘'
+    enabled: true
+
+# 目标高校就业网（每日浏览器访问）
+university_career_sites:
+  - name: 中国科学院大学就业信息网
+    url: https://job.ucas.ac.cn/
+    enabled: true
+  - name: 清华大学学生职业发展指导中心
+    url: https://career.tsinghua.edu.cn/
+    enabled: true
+  - name: 北京大学学生就业指导服务中心
+    url: https://scc.pku.edu.cn/
+    enabled: true
+  - name: 浙江大学就业服务平台
+    url: https://www.career.zju.edu.cn/
+    enabled: true
+  - name: 四川大学就业指导中心
+    url: https://jy.scu.edu.cn/
+    enabled: true
+  - name: 上海交通大学学生就业服务和职业发展中心
+    url: https://www.job.sjtu.edu.cn/
+    enabled: true
+  - name: 武汉大学学生就业指导与服务中心
+    url: https://xsjy.whu.edu.cn/
+    enabled: true
+  - name: 北京化工大学就业信息网
+    url: https://career.buct.edu.cn/
+    enabled: true
+  - name: 吉林大学就业网
+    url: https://jdjyw.jlu.edu.cn/
+    enabled: true
+  - name: 北京师范大学就业资讯网
+    url: https://career.bnu.edu.cn/
+    enabled: true
+  - name: 中国科学技术大学就业信息网
+    url: https://www.job.ustc.edu.cn/
+    enabled: true
+
+# 微信公众号渠道（用 websearch 搜索 site:mp.weixin.qq.com + 账号名 + 关键词）
+wechat_accounts:
+  - name: 高校人才网V
+    enabled: true
+  - name: 高才医学
+    enabled: true
+  - name: BioArt
+    enabled: true
+  - name: iNature
+    enabled: true
+  - name: 生物制药小编
+    enabled: true
+  - name: 生物探索
+    enabled: true
+  - name: 成功就业
+    enabled: true
+
+tracked_companies:
+  - name: 乐普医疗
+    careers_url: https://www.lepumedical.com
+    tags: [medical-device, coronary-stent]
+    enabled: true
+  - name: 微创医疗
+    careers_url: https://www.microport.com
+    tags: [medical-device, coronary-stent]
+    enabled: true
+  - name: 先健科技
+    careers_url: https://www.lifetechmed.com
+    tags: [medical-device, structural-heart]
+    enabled: true
+  - name: 赛诺医疗
+    careers_url: https://www.sinomed.com
+    tags: [medical-device, coronary-stent]
+    enabled: true
+  - name: 心脉医疗
+    careers_url: https://www.endovastec.com
+    tags: [medical-device, aortic]
+    enabled: true
+  - name: 归创通桥
+    careers_url: https://www.zylox-tontine.com
+    tags: [medical-device, neuro-interventional]
+    enabled: true
+  - name: 蓝帆医疗
+    careers_url: https://www.blue-sail.com
+    tags: [medical-device, coronary-stent]
+    enabled: true
+  - name: 美中双和
+    careers_url: https://www.mzsh.com
+    tags: [medical-device, interventional]
+    enabled: true
+  - name: 垠艺生物
+    careers_url: http://www.yiyimed.com
+    tags: [medical-device, drug-eluting]
+    enabled: true
+  - name: 巴泰医疗
+    careers_url: https://www.bartemed.com
+    tags: [medical-device, interventional]
+    enabled: true
+  - name: 元心科技
+    careers_url: https://www.biotyxmed.com
+    tags: [medical-device, bioresorbable-stent]
+    enabled: true
+  - name: 阿迈特医疗
+    careers_url: https://www.ametcorp.com
+    tags: [medical-device, bioresorbable-stent]
+    enabled: true
+  - name: 波士顿科学
+    careers_url: https://bostonscientific.cn/CareerDevelopment/CampusRecruitment
+    tags: [medical-device, cardiovascular]
+    enabled: true
+  - name: 科曼医疗
+    careers_url: https://www.comen.com
+    tags: [medical-device, monitor]
+    enabled: true
+  - name: 北京道生济医疗
+    careers_url: https://www.zhaopin.com/companydetail/CZ690750720.htm
+    tags: [medical-device, interventional]
+    enabled: true

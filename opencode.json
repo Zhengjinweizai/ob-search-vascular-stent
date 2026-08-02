@@ -1,0 +1,21 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": [
+    "@openpets/excel",
+    "job-forge",
+    "@freely01/opencode-notify"
+  ],
+  "provider": {
+    "deepseek": {
+      "options": {
+        "baseURL": "https://api.deepseek.com"
+      },
+      "models": {
+        "deepseek-chat": {
+          "name": "DeepSeek V3"
+        }
+      }
+    }
+  },
+  "model": "deepseek/deepseek-chat"
+}
