@@ -97,13 +97,21 @@ node search-engine.cjs match new-jobs.json
 - ≥80 分进**「推荐投递」sheet**（强烈推荐）；60-79 值得考虑；<60 暂不推荐（记录但不进推荐sheet、不推送）
 - 在招聘信息第 8 列备注写入 `智能匹配{分}分【{类型}】|{级别}|{理由}`
 
-## 5. 清理临时文件
+## 5. 导出 CSV（供 GitHub 自动提交）
+
+`match` 完成后运行以下命令，生成 `求职记录`（UTF-8 带 BOM 的 CSV 文本，无扩展名）：
+
+```bash
+node search-engine.cjs export-csv
+```
+
+## 6. 清理临时文件
 
 ```bash
 node search-engine.cjs cleanup
 ```
 
-## 6. 输出结果
+## 7. 输出结果
 
 请输出以下格式的摘要（直接返回文本，无需 JSON）：
 
