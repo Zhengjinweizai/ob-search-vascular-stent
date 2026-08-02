@@ -46,6 +46,20 @@ function dimsText(dims) {
   return `研究${dims.research}/技能${dims.skill}/学历${dims.education}/行业${dims.industry}/企业${dims.company}`;
 }
 
+function csvCell(v) {
+  if (v === null || v === undefined) return '';
+  if (typeof v === 'object') {
+    if (v.text !== undefined) v = v.text;
+    else if (v.result !== undefined) v = v.result;
+    else if (v.richText) v = v.richText.map(r => r.text).join('');
+    else v = '';
+  }
+  let s = String(v);
+  s = s.replace(/\r?\n/g, ' ').trim();
+  if (/[",]/.test(s)) s = '"' + s.replace(/"/g, '""') + '"';
+  return s;
+}
+
 function ensureMatchHeaders(ws) {
   const headers = {
     9: '智能匹配分（0-100）',
@@ -566,6 +580,25 @@ if (mode === 'check') {
     console.log(`已导出 ${out.length} 条高分职位到 ${filePath}`);
   })().catch(e => { console.error(`导出失败: ${e.message}`); process.exit(1); });
 
+} else if (mode === 'export-csv') {
+  // 导出 招聘信息 sheet 到 CSV 文本（UTF-8 带 BOM），供 GitHub 自动提交
+  const outFile = process.argv[3] || '求职记录';
+  (async () => {
+    const wb = await readExcel();
+    const ws = wb.getWorksheet('招聘信息');
+    if (!ws) { console.error('招聘信息表不存在'); process.exit(1); }
+    const lines = [];
+    ws.eachRow(row => {
+      const vals = [];
+      for (let c = 1; c <= 12; c++) vals.push(csvCell(row.getCell(c).value));
+      lines.push(vals.join(','));
+    });
+    const csv = '\uFEFF' + lines.join('\r\n') + '\r\n';
+    fs.writeFileSync(outFile, csv, 'utf-8');
+    const count = Math.max(0, lines.length - 1);
+    log(`已导出 ${count} 条职位 → ${outFile}`);
+  })().catch(e => { console.error(`导出失败: ${e.message}`); process.exit(1); });
+
 } else if (mode === 'backfill') {
   // 按 单位+岗位 匹配，回填第9-12列并重建推荐投递
   const filePath = process.argv[3];
@@ -658,6 +691,7 @@ if (mode === 'check') {
   node search-engine.cjs append-file <f> - 从 JSON 文件追加职位（推荐，避免管道乱码）
   node search-engine.cjs match <f>      - 智能匹配：5 维评分 -> 加权算分 -> 写入 + 重建推荐投递 + 汇总
   node search-engine.cjs export [f]     - 导出高分历史职位（第7列>=7）供回填评分
+  node search-engine.cjs export-csv [f] - 导出 招聘信息 到 CSV 文本（默认 求职记录，UTF-8 带 BOM）
   node search-engine.cjs backfill <f>   - 回填智能匹配分（按 单位+岗位 匹配更新）
   node search-engine.cjs summary        - 更新汇总统计表
   node search-engine.cjs cleanup        - 清理临时锁文件

@@ -12,6 +12,7 @@
     "notify": "node notify-job.cjs",
     "match": "node search-engine.cjs match new-jobs.json",
     "export": "node search-engine.cjs export",
+    "export-csv": "node search-engine.cjs export-csv",
     "backfill": "node search-engine.cjs backfill",
     "daily": "node search-engine.cjs cleanup && opencode run --auto --format json < .opencode/daily-search-prompt.md",
     "test": "echo \"Error: no test specified\" && exit 1"
