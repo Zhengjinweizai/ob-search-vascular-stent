@@ -9,6 +9,8 @@ on:
 env:
   DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
   SERVERCHAN_SENDKEY: ${{ secrets.SERVERCHAN_SENDKEY }}
+  OPENAI_BASE_URL: https://api.deepseek.com
+  OPENAI_MODEL_NAME: deepseek-chat
 
 jobs:
   daily-job-search:
@@ -17,7 +19,6 @@ jobs:
       - name: 检出代码
         uses: actions/checkout@v4
 
-      # 🔴 新增：加快安装速度（推荐保留）
       - name: 缓存 Node 依赖
         uses: actions/cache@v3
         with:
@@ -37,53 +38,57 @@ jobs:
       - name: 安装 opencode
         run: npm install -g opencode-ai
 
-      # 🔴 修改：去掉 < 符号，直接用路径传文件，更稳定
       - name: 运行每日任务（AI 抓取 + 智能匹配）
         run: |
           opencode run --auto --format json .opencode/daily-search-prompt.md
 
-      # 🔴 新增：将 AI 的输出转换成带后缀的 CSV 表格
+      # 🔴 修改：生成的文件名直接叫 求职记录.csv
       - name: 转换为 CSV 表格
         run: |
           if [ -f "求职记录" ]; then
             sudo apt-get install -y jq
-            # 提取核心字段生成真实 CSV (文件名带 .csv 后缀，Excel 才能直接双击打开)
-            jq -r '.jobs[] | [.title, .company, .location, .match_score, .url] | @csv' 求职记录 > 求职记录_血管支架.csv
+            
+            echo "===== 原始AI生成内容预览 ====="
+            head -n 20 求职记录
+            echo "==============================="
+
+            awk '/^{/{flag=1} flag; /^}$/{flag=0}' 求职记录 > clean.json
+            
+            # 注意这里改为求职记录.csv
+            jq -r '.jobs[] | [.title, .company, .location, .match_score, .url] | @csv' clean.json > 求职记录.csv
+            
             echo "✅ 成功生成 Excel 可直接打开的 CSV 表格！"
           else
             echo "⚠️ 未检测到原始数据文件，后续流程将被跳过。"
             exit 1
           fi
 
-      # 🔴 修改：只提交 CSV 表格和 portals.yml 文件
+      # 🔴 修改：git add 的文件名改为 求职记录.csv
       - name: 提交结果
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-          git add 求职记录_血管支架.csv portals.yml 2>/dev/null || true
+          git add 求职记录.csv portals.yml 2>/dev/null || true
           git commit -m "自动更新招聘信息 $(date +%F)" --allow-empty
           git push
 
-      # 🔴 新增：推送微信（并附带 CSV 文件直接下载链接）
+      # 🔴 修改：微信推送里的判断文件和下载链接都改成 求职记录.csv
       - name: 推送到微信（带表格下载链接）
         env:
           SENDKEY: ${{ secrets.SERVERCHAN_SENDKEY }}
         run: |
           CURRENT_DATE=$(date +%Y年%m月%d日)
-          if [ -f "求职记录_血管支架.csv" ]; then
-            # 截取前 3 行发到微信作为文字预览（避免微信字数超限）
-            CSV_PREVIEW=$(head -n 3 求职记录_血管支架.csv)
-            # 生成可直接在手机微信里点击下载该表格的 URL 链接
-            DOWNLOAD_URL="https://github.com/${GITHUB_REPOSITORY}/raw/main/求职记录_血管支架.csv"
+          if [ -f "求职记录.csv" ]; then
+            CSV_PREVIEW=$(head -n 3 求职记录.csv)
+            DOWNLOAD_URL="https://github.com/${GITHUB_REPOSITORY}/raw/main/求职记录.csv"
           else
             CSV_PREVIEW="今日无新增数据"
             DOWNLOAD_URL="暂无"
           fi
 
-          # 调用 Server酱 接口推送微信消息
           curl -X POST "https://sctapi.ftqq.com/${SENDKEY}.send" \
             -H "Content-Type: application/json" \
             -d '{
               "title": "📊 血管支架岗位日报 '"${CURRENT_DATE}"'",
-              "desp": "今日职位抓取已完成！\n\n📋 简历预览（前 3 条）：\n'"${CSV_PREVIEW}"'\n\n📥 【点此下载完整 Excel 表格】('"${DOWNLOAD_URL}"')\n\n（点击链接可直接下载到手机）"
+              "desp": "今日职位抓取已完成！\n\n📋 职位预览（前 3 条）：\n'"${CSV_PREVIEW}"'\n\n📥 【点此下载完整 Excel 表格】('"${DOWNLOAD_URL}"')\n\n（点击链接可直接下载到手机或电脑）"
             }'
