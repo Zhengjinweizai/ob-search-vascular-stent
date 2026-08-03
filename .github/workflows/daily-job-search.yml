@@ -1,5 +1,6 @@
 name: 每日招聘信息抓取
-
+permissions:
+  contents: write
 on:
   schedule:
     - cron: '0 0 * * *'   # UTC 00:00 = 北京时间 08:00
