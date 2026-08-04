@@ -3,11 +3,14 @@ name: 每日招聘信息抓取
 on:
   schedule:
     - cron: '0 0 * * *'   # UTC 00:00 = 北京时间 08:00
-  workflow_dispatch:       # 支持手动触发试跑
+  workflow_dispatch:       # 支持手动触发
 
 env:
   DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
   SERVERCHAN_SENDKEY: ${{ secrets.SERVERCHAN_SENDKEY }}
+
+permissions:
+  contents: write
 
 jobs:
   daily-job-search:
@@ -27,14 +30,14 @@ jobs:
       - name: 安装 opencode
         run: npm install -g opencode-ai
 
-      - name: 运行每日任务（AI 抓取 + 智能匹配 + 导出CSV）
+      - name: 运行每日任务AI抓取 + 智能匹配 + 生成CSV
         run: |
           opencode run --auto --format json < .opencode/daily-search-prompt.md
 
-      - name: 上传 Excel 并推送微信日报
+      - name: 上传 Excel 并推微信日报
         run: node notify-job.cjs
 
-      - name: 提交结果
+      - name: 提交代码
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
