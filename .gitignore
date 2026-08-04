@@ -3,6 +3,7 @@ daily-log.txt
 serverchan.key
 *.xlsx
 *.xls
+!求职记录.xlsx
 *.backup-*.cjs
 *.backup-*.md
 *-backup-*.cjs
