@@ -1,6 +1,5 @@
 name: 每日招聘信息抓取
-permissions:
-  contents: write
+
 on:
   schedule:
     - cron: '0 0 * * *'   # UTC 00:00 = 北京时间 08:00
@@ -9,8 +8,6 @@ on:
 env:
   DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
   SERVERCHAN_SENDKEY: ${{ secrets.SERVERCHAN_SENDKEY }}
-  OPENAI_BASE_URL: https://api.deepseek.com
-  OPENAI_MODEL_NAME: deepseek-chat
 
 jobs:
   daily-job-search:
@@ -18,14 +15,6 @@ jobs:
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
-
-      - name: 缓存 Node 依赖
-        uses: actions/cache@v3
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
 
       - name: 安装 Node 20
         uses: actions/setup-node@v4
@@ -38,57 +27,17 @@ jobs:
       - name: 安装 opencode
         run: npm install -g opencode-ai
 
-      - name: 运行每日任务（AI 抓取 + 智能匹配）
+      - name: 运行每日任务（AI 抓取 + 智能匹配 + 导出CSV）
         run: |
-          opencode run --auto --format json .opencode/daily-search-prompt.md
+          opencode run --auto --format json < .opencode/daily-search-prompt.md
 
-      # 🔴 修改：生成的文件名直接叫 求职记录.csv
-      - name: 转换为 CSV 表格
-        run: |
-          if [ -f "求职记录" ]; then
-            sudo apt-get install -y jq
-            
-            echo "===== 原始AI生成内容预览 ====="
-            head -n 20 求职记录
-            echo "==============================="
+      - name: 上传 Excel 并推送微信日报
+        run: node notify-job.cjs
 
-            awk '/^{/{flag=1} flag; /^}$/{flag=0}' 求职记录 > clean.json
-            
-            # 注意这里改为求职记录.csv
-            jq -r '.jobs[] | [.title, .company, .location, .match_score, .url] | @csv' clean.json > 求职记录.csv
-            
-            echo "✅ 成功生成 Excel 可直接打开的 CSV 表格！"
-          else
-            echo "⚠️ 未检测到原始数据文件，后续流程将被跳过。"
-            exit 1
-          fi
-
-      # 🔴 修改：git add 的文件名改为 求职记录.csv
       - name: 提交结果
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-          git add 求职记录.csv portals.yml 2>/dev/null || true
+          git add 求职记录.xlsx 求职记录 portals.yml 2>/dev/null || true
           git commit -m "自动更新招聘信息 $(date +%F)" --allow-empty
           git push
-
-      # 🔴 修改：微信推送里的判断文件和下载链接都改成 求职记录.csv
-      - name: 推送到微信（带表格下载链接）
-        env:
-          SENDKEY: ${{ secrets.SERVERCHAN_SENDKEY }}
-        run: |
-          CURRENT_DATE=$(date +%Y年%m月%d日)
-          if [ -f "求职记录.csv" ]; then
-            CSV_PREVIEW=$(head -n 3 求职记录.csv)
-            DOWNLOAD_URL="https://github.com/${GITHUB_REPOSITORY}/raw/main/求职记录.csv"
-          else
-            CSV_PREVIEW="今日无新增数据"
-            DOWNLOAD_URL="暂无"
-          fi
-
-          curl -X POST "https://sctapi.ftqq.com/${SENDKEY}.send" \
-            -H "Content-Type: application/json" \
-            -d '{
-              "title": "📊 血管支架岗位日报 '"${CURRENT_DATE}"'",
-              "desp": "今日职位抓取已完成！\n\n📋 职位预览（前 3 条）：\n'"${CSV_PREVIEW}"'\n\n📥 【点此下载完整 Excel 表格】('"${DOWNLOAD_URL}"')\n\n（点击链接可直接下载到手机或电脑）"
-            }'
