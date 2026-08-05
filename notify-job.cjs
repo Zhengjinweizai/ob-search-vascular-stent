@@ -1,13 +1,26 @@
 const ExcelJS = require('exceljs');
 const fs = require('fs');
 
-function loadSendKey() {
-  if (process.env.SERVERCHAN_SENDKEY) return process.env.SERVERCHAN_SENDKEY.trim();
-  try {
-    const k = fs.readFileSync('serverchan.key', 'utf8').trim();
-    if (k) return k;
-  } catch (e) { /* ignore */ }
-  throw new Error('未配置 SendKey：请设置环境变量 SERVERCHAN_SENDKEY 或在项目目录创建 serverchan.key 文件');
+function loadSendKeys() {
+  const list = [];
+  if (process.env.SERVERCHAN_SENDKEY) {
+    for (const k of process.env.SERVERCHAN_SENDKEY.split(',')) {
+      const v = k.trim();
+      if (v) list.push(v);
+    }
+  }
+  if (list.length === 0) {
+    try {
+      for (const line of fs.readFileSync('serverchan.key', 'utf8').split(/\r?\n/)) {
+        const v = line.trim();
+        if (v) list.push(v);
+      }
+    } catch (e) { /* ignore */ }
+  }
+  if (list.length === 0) {
+    throw new Error('未配置 SendKey：请设置环境变量 SERVERCHAN_SENDKEY（逗号分隔多个）或在项目目录创建 serverchan.key 文件');
+  }
+  return list;
 }
 
 function pad2(n) {
@@ -191,22 +204,29 @@ async function main() {
   const downloadUrl = await uploadExcel('求职记录.xlsx');
   desp += `📎 **求职记录.xlsx 在线下载：** [点击下载](${downloadUrl})（有效期 48h）\n`;
 
-  const apiUrl = `https://sctapi.ftqq.com/${loadSendKey()}.send`;
+  const keys = loadSendKeys();
+  let okCount = 0;
+  const failed = [];
+  for (let i = 0; i < keys.length; i++) {
+    const apiUrl = `https://sctapi.ftqq.com/${keys[i]}.send`;
+    const res = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, desp }),
+    });
 
-  const res = await fetch(apiUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ title, desp }),
-  });
-
-  const result = await res.json();
-  if (result.code === 0) {
-    console.log('推送成功 pushid:', result.data?.pushid);
-    console.log('下载链接:', downloadUrl);
-  } else {
-    console.error('推送失败:', JSON.stringify(result));
-    process.exit(1);
+    const result = await res.json();
+    if (result.code === 0) {
+      okCount++;
+      console.log(`推送成功[${i + 1}/${keys.length}] pushid:`, result.data?.pushid);
+    } else {
+      console.error(`推送失败[${i + 1}/${keys.length}]:`, JSON.stringify(result));
+      failed.push(i + 1);
+    }
   }
+  console.log('下载链接:', downloadUrl);
+  if (okCount === 0) process.exit(1);
+  if (failed.length > 0) console.warn(`部分发送失败，失败序号: ${failed.join(', ')}（共 ${keys.length} 个 key）`);
 }
 
 main().catch(e => { console.error('Error:', e.message); process.exit(1); });
