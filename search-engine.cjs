@@ -111,22 +111,32 @@ function buildChannels() {
 
   const baseQueries = config.search_queries.filter(q => q.enabled !== false).map(q => ({ name: q.name, query: q.query }));
   const keywords = (sc.keywords || []).map(k => String(k).trim()).filter(Boolean);
+  let searchQueries = baseQueries;
 
   if (sc.gen_queries !== false && keywords.length > 0) {
+    const WEIXIN = 'mp.weixin.qq.com';
+    const suffix = sc.query_suffix ? ` ${String(sc.query_suffix).trim()}` : '';
+    // 特指查询（带账号名引号等聚合表达不了的形式）→ 保留
+    const specials = baseQueries.filter(q => /"/.test(q.query) || !/^site:\S+\s/.test(q.query.trim()));
+    // 其余泛查询 → 按唯一 site 域名合并为 1 条聚合查询（公众号域名由特指查询覆盖，排除）
     const domains = new Set();
     baseQueries.forEach(q => {
       const m = String(q.query).match(/site:([a-zA-Z0-9._-]+)/g);
-      if (m) m.forEach(x => domains.add(x.replace(/^site:/, '')));
+      if (m) m.forEach(x => {
+        const d = x.replace(/^site:/, '');
+        if (d !== WEIXIN) domains.add(d);
+      });
     });
-    const suffix = sc.query_suffix ? ` ${String(sc.query_suffix).trim()}` : '';
-    domains.forEach(d => {
-      baseQueries.push({ name: `聚合-${d}`, query: `site:${d} ${keywords.join(' OR ')}${suffix}` });
-    });
+    const aggregates = [...domains].map(d => ({
+      name: `聚合-${d}`,
+      query: `site:${d} ${keywords.join(' OR ')}${suffix}`,
+    }));
+    searchQueries = [...specials, ...aggregates];
   }
 
   (sc.extra_queries || []).forEach((q, i) => {
     if (q && q.enabled !== false && q.query) {
-      baseQueries.push({ name: q.name || `自定义-${i + 1}`, query: q.query });
+      searchQueries.push({ name: q.name || `自定义-${i + 1}`, query: q.query });
     }
   });
 
@@ -136,7 +146,7 @@ function buildChannels() {
   return {
     config,
     sc,
-    search_queries: baseQueries,
+    search_queries: searchQueries,
     university_career_sites: config.university_career_sites.filter(s => s.enabled !== false).map(s => ({
       name: s.name, url: s.url
     })),
