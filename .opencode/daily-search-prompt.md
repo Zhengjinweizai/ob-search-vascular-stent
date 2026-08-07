@@ -6,9 +6,11 @@
 ```bash
 node search-engine.cjs check
 ```
-输出 JSON 包含：`search_queries`（37 条）、`university_career_sites`（11 所）、`wechat_accounts`（7 个）、`tracked_companies`（15 家）、`existing_job_count`。
+输出 JSON 包含：`search_queries`（数量动态，含 portals.yml 原查询 + search-config.yml 自动生成与自定义查询）、`university_career_sites`、`wechat_accounts`、`tracked_companies`、`filters`、`cities`、`job_types`、`existing_job_count`。
 
-再用 **read 工具读取能力模型 `profile_model.yml`**（它就是匹配基准），里面有：
+再用 **read 工具读取两个配置**：
+- `search-config.yml`：`keywords`（收录关键词）、`exclude`（排除词）、`cities`（城市范围）、`job_types`（采集重点岗位类型）——**筛选时以此为准**
+- `profile_model.yml`（匹配基准），里面有：
 - 候选人的学历、研究方向、技能（材料学/生物相容性评价/支架设计/动物实验）、目标岗位
 - 5 个评分维度的关键词和打分参考（见下面 2.2 节）
 - 评分权重（研究方向 0.35 / 技能 0.30 / 学历 0.15 / 行业 0.10 / 企业类型 0.10）
@@ -35,9 +37,10 @@ node search-engine.cjs check
 ## 2. 筛选与智能评分
 
 ### 2.1 筛选条件
-- **采集重点：校园招聘（校招）和应届生岗位**优先，社招中方向高度匹配的也可纳入
-- 标题/描述包含：血管支架、支架、介入、医疗器械、生物医用材料、可降解、球囊、导管、镍钛、药物涂层、心血管介入等
-- **排除**：实习、销售、市场、行政、财务、人事
+- **采集重点：校园招聘（校招）和应届生岗位**优先，社招中方向高度匹配的也可纳入（对照 `search-config.yml` 的 `job_types`）
+- 标题/描述包含 `search-config.yml` 的 `keywords` 中任一关键词即纳入（如：血管支架、介入、医疗器械、可降解支架、球囊、导管、镍钛、药物涂层、神经介入等）
+- 城市优先匹配 `search-config.yml` 的 `cities`
+- **排除**：命中 `search-config.yml` 的 `exclude`（如：实习、销售、市场、行政、财务、人事）
 - 评分后总分 < 60（暂不推荐）的**低分岗位不要写入**（避免污染数据）；≥ 60 的都写入
 
 ### 2.2 五维评分（每维 0-100，对照 profile_model.yml）
