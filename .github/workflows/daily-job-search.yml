@@ -8,6 +8,8 @@ on:
 env:
   DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
   SERVERCHAN_SENDKEY: ${{ secrets.SERVERCHAN_SENDKEY }}
+  PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
+  PUSHPLUS_TOPIC: ${{ secrets.PUSHPLUS_TOPIC }}
 
 permissions:
   contents: write
