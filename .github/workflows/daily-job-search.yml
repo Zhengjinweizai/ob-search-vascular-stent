@@ -36,6 +36,9 @@ jobs:
         run: |
           opencode run --auto --format json < .opencode/daily-search-prompt.md
 
+      - name: 生成 HTML 网页日报（GitHub Pages）
+        run: node search-engine.cjs report
+
       - name: 上传 Excel 并推微信日报
         run: node notify-job.cjs
 
@@ -43,6 +46,6 @@ jobs:
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-          git add 求职记录.xlsx 求职记录 portals.yml 2>/dev/null || true
+          git add 求职记录.xlsx 求职记录 index.html .nojekyll portals.yml 2>/dev/null || true
           git commit -m "自动更新招聘信息 $(date +%F)" --allow-empty
           git push
