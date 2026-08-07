@@ -6,6 +6,7 @@ const yaml = require('js-yaml');
 const EXCEL_FILE = '求职记录.xlsx';
 const STATE_FILE = '.searched-queries.json';
 const CONFIG_FILE = 'portals.yml';
+const SEARCH_CONFIG_FILE = 'search-config.yml';
 const PROFILE_FILE = 'profile_model.yml';
 
 const MATCH_WEIGHTS = {
@@ -86,6 +87,60 @@ function log(msg) {
 function loadConfig() {
   const raw = fs.readFileSync(CONFIG_FILE, 'utf-8');
   return yaml.load(raw);
+}
+
+function loadSearchConfig() {
+  try {
+    if (fs.existsSync(SEARCH_CONFIG_FILE)) {
+      return yaml.load(fs.readFileSync(SEARCH_CONFIG_FILE, 'utf-8')) || {};
+    }
+  } catch (e) { /* ignore */ }
+  return {};
+}
+
+function buildChannels() {
+  const config = loadConfig();
+  const sc = loadSearchConfig();
+
+  const baseQueries = config.search_queries.filter(q => q.enabled !== false).map(q => ({ name: q.name, query: q.query }));
+  const keywords = (sc.keywords || []).map(k => String(k).trim()).filter(Boolean);
+
+  if (sc.gen_queries !== false && keywords.length > 0) {
+    const domains = new Set();
+    baseQueries.forEach(q => {
+      const m = String(q.query).match(/site:([a-zA-Z0-9._-]+)/g);
+      if (m) m.forEach(x => domains.add(x.replace(/^site:/, '')));
+    });
+    const suffix = sc.query_suffix ? ` ${String(sc.query_suffix).trim()}` : '';
+    domains.forEach(d => {
+      baseQueries.push({ name: `聚合-${d}`, query: `site:${d} ${keywords.join(' OR ')}${suffix}` });
+    });
+  }
+
+  (sc.extra_queries || []).forEach((q, i) => {
+    if (q && q.enabled !== false && q.query) {
+      baseQueries.push({ name: q.name || `自定义-${i + 1}`, query: q.query });
+    }
+  });
+
+  const positive = (sc.keywords && sc.keywords.length ? sc.keywords : (config.title_filter && config.title_filter.positive) || []);
+  const negative = (sc.exclude && sc.exclude.length ? sc.exclude : (config.title_filter && config.title_filter.negative) || []);
+
+  return {
+    config,
+    sc,
+    search_queries: baseQueries,
+    university_career_sites: config.university_career_sites.filter(s => s.enabled !== false).map(s => ({
+      name: s.name, url: s.url
+    })),
+    wechat_accounts: config.wechat_accounts.filter(a => a.enabled !== false).map(a => a.name),
+    tracked_companies: config.tracked_companies.filter(c => c.enabled !== false).map(c => ({
+      name: c.name, careers_url: c.careers_url
+    })),
+    filters: { positive, negative },
+    cities: sc.cities || [],
+    job_types: sc.job_types || [],
+  };
 }
 
 function loadState() {
@@ -424,18 +479,17 @@ async function updateSummary() {
 const mode = process.argv[2];
 
 if (mode === 'check') {
-  const config = loadConfig();
+  const c = buildChannels();
 
   const result = {
     search_mode: 'daily-full',
-    search_queries: config.search_queries.filter(q => q.enabled !== false).map(q => ({ name: q.name, query: q.query })),
-    university_career_sites: config.university_career_sites.filter(s => s.enabled !== false).map(s => ({
-      name: s.name, url: s.url
-    })),
-    wechat_accounts: config.wechat_accounts.filter(a => a.enabled !== false).map(a => a.name),
-    tracked_companies: config.tracked_companies.filter(c => c.enabled !== false).map(c => ({
-      name: c.name, careers_url: c.careers_url
-    })),
+    search_queries: c.search_queries,
+    university_career_sites: c.university_career_sites,
+    wechat_accounts: c.wechat_accounts,
+    tracked_companies: c.tracked_companies,
+    filters: c.filters,
+    cities: c.cities,
+    job_types: c.job_types,
     existing_job_count: 0,
   };
 
@@ -669,18 +723,17 @@ if (mode === 'check') {
     log(`已清理锁文件: ${lockFile}`);
   }
   log('每日搜索准备就绪');
-  const config = loadConfig();
+  const c = buildChannels();
   console.log(JSON.stringify({
     status: 'ready',
     search_mode: 'daily-full',
-    search_queries: config.search_queries.filter(q => q.enabled !== false).map(q => ({ name: q.name, query: q.query })),
-    university_career_sites: config.university_career_sites.filter(s => s.enabled !== false).map(s => ({
-      name: s.name, url: s.url
-    })),
-    wechat_accounts: config.wechat_accounts.filter(a => a.enabled !== false).map(a => a.name),
-    tracked_companies: config.tracked_companies.filter(c => c.enabled !== false).map(c => ({
-      name: c.name, careers_url: c.careers_url
-    })),
+    search_queries: c.search_queries,
+    university_career_sites: c.university_career_sites,
+    wechat_accounts: c.wechat_accounts,
+    tracked_companies: c.tracked_companies,
+    filters: c.filters,
+    cities: c.cities,
+    job_types: c.job_types,
   }));
 
 } else {
