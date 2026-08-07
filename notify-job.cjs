@@ -54,20 +54,26 @@ async function sendPushPlus(cfg, title, desp) {
   return { ok: false, data: result };
 }
 
+function buildReportUrl() {
+  if (process.env.REPORT_URL) return process.env.REPORT_URL.replace(/\/+$/, '');
+  const repo = process.env.GITHUB_REPOSITORY || '';
+  if (repo && repo.includes('/')) {
+    const [owner, name] = repo.split('/');
+    return `https://${owner}.github.io/${name}/`;
+  }
+  return 'https://Zhengjinweizai.github.io/ob-search-vascular-stent/';
+}
+
+function buildExcelRawUrl() {
+  const repo = process.env.GITHUB_REPOSITORY || '';
+  const base = repo && repo.includes('/')
+    ? `https://raw.githubusercontent.com/${repo}/main`
+    : 'https://raw.githubusercontent.com/Zhengjinweizai/ob-search-vascular-stent/main';
+  return `${base}/${encodeURIComponent('求职记录.xlsx')}`;
+}
+
 function pad2(n) {
   return String(n).padStart(2, '0');
-}
-
-function matchLevel(score) {
-  if (score >= 80) return '强烈推荐';
-  if (score >= 60) return '值得考虑';
-  return '暂不推荐';
-}
-
-function extractReason(note) {
-  if (!note) return '';
-  const parts = String(note).split('|');
-  return parts[parts.length - 1].trim();
 }
 
 const campusPriority = (j) => /校园招聘|校招|应届/.test(String(j.note)) ? 0 : 1;
@@ -175,45 +181,39 @@ async function main() {
   const lowTodayCount = todayJobs.filter(j => j.score < 60).length;
 
   // Build message
-  let desp = `## 🎯 高匹配度岗位（≥80分，今日新增）\n\n`;
+  const title = `📊 【求职日报】${today} · 新增${todayJobs.length} 推荐${highTodayCount}`;
 
-  if (highToday.length > 0) {
-    for (const j of highToday) {
-      const reason = extractReason(j.note) || matchLevel(j.score);
-      desp += `【${j.score}分】${j.position} - ${j.company}\n`;
-      desp += `💡 匹配理由：${reason}\n`;
-      desp += `🔗 链接：${j.url || '暂无'}\n\n`;
-    }
-  } else {
-    desp += `✅ 今日暂无 ≥80 分新岗位\n\n`;
-  }
-
-  desp += `## 📊 今日新增汇总\n\n`;
-  desp += `✅ 今日共捕获岗位：${todayJobs.length} 个\n`;
+  let desp = `## 📊 今日新增汇总\n\n`;
+  desp += `今日共捕获岗位：${todayJobs.length} 个\n`;
   desp += `⭐ 高匹配度（≥80分）：${highTodayCount} 个\n`;
   desp += `📌 中等匹配（60-79分）：${mediumTodayCount} 个\n`;
   desp += `⏳ 低匹配（<60分）：${lowTodayCount} 个\n\n`;
   desp += `---\n\n`;
 
-  desp += `## 📎 完整岗位清单\n\n`;
-  desp += `完整岗位清单（含中低匹配度）：请查看项目目录中的 Excel 表格：**求职记录.xlsx**\n\n`;
+  desp += `## 🎯 高匹配度岗位（今日 ≥80）\n\n`;
+  if (highToday.length > 0) {
+    for (const j of highToday) {
+      desp += `【${j.score}分】${j.position} - ${j.company}\n`;
+      desp += `🔗 ${j.url || '暂无'}\n\n`;
+    }
+  } else {
+    desp += `✅ 今日暂无 ≥80 分新岗位\n\n`;
+  }
   desp += `---\n\n`;
 
   desp += `## 📅 历史累计\n\n`;
   desp += `【7日内累计】（${weekAgoStr} ~ ${today}）\n`;
-  desp += `    累计捕获岗位数：${weekStats.total} 个\n`;
-  desp += `    累计推荐投递数：${weekStats.rec} 个\n`;
-  desp += `    已投递数：${weekStats.applied} 个\n`;
-  if (weekStats.interview > 0) desp += `    面试中数：${weekStats.interview} 个\n`;
-  if (weekStats.rejected > 0) desp += `    已拒绝数：${weekStats.rejected} 个\n`;
-  desp += `\n`;
+  desp += `    累计捕获：${weekStats.total} 个｜推荐投递：${weekStats.rec} 个\n`;
+  desp += `    已投递：${weekStats.applied} 个`;
+  if (weekStats.interview > 0) desp += `｜面试中：${weekStats.interview} 个`;
+  if (weekStats.rejected > 0) desp += `｜已拒绝：${weekStats.rejected} 个`;
+  desp += `\n\n`;
   desp += `【本月累计】（${monthPrefix}）\n`;
-  desp += `    累计捕获岗位数：${monthStats.total} 个\n`;
-  desp += `    累计推荐投递数：${monthStats.rec} 个\n`;
-  desp += `    已投递数：${monthStats.applied} 个\n`;
-  if (monthStats.interview > 0) desp += `    面试中数：${monthStats.interview} 个\n`;
-  if (monthStats.rejected > 0) desp += `    已拒绝数：${monthStats.rejected} 个\n`;
-  desp += `\n---\n\n`;
+  desp += `    累计捕获：${monthStats.total} 个｜推荐投递：${monthStats.rec} 个\n`;
+  desp += `    已投递：${monthStats.applied} 个`;
+  if (monthStats.interview > 0) desp += `｜面试中：${monthStats.interview} 个`;
+  if (monthStats.rejected > 0) desp += `｜已拒绝：${monthStats.rejected} 个`;
+  desp += `\n\n`;
 
   if (highToday.length > 0) {
     const top = highToday[0];
@@ -221,7 +221,9 @@ async function main() {
     desp += `建议今日优先投递：**${top.company}（${top.position}）**\n\n`;
   }
 
-  const title = `📊 【求职日报】${today}`;
+  desp += `---\n\n`;
+  desp += `📄 **完整岗位网页：** ${buildReportUrl()}\n`;
+  desp += `📎 **Excel 下载：** ${buildExcelRawUrl()}\n`;
 
   if (process.env.NOTIFY_DRY_RUN === '1') {
     console.log('===== DRY RUN (不推送) =====');
@@ -232,13 +234,12 @@ async function main() {
     return;
   }
 
-  let downloadUrl = null;
+  let backupUrl = null;
   try {
-    downloadUrl = await uploadExcel('求职记录.xlsx');
-    desp += `📎 **求职记录.xlsx 在线下载：** [点击下载](${downloadUrl})（有效期 48h）\n`;
+    backupUrl = await uploadExcel('求职记录.xlsx');
+    desp += `📥 **临时下载（48h）：** ${backupUrl}\n`;
   } catch (e) {
-    console.warn(`Excel 上传失败，本次日报不含下载链接: ${e.message}`);
-    desp += `📎 求职记录.xlsx 已同步到 GitHub 仓库（下载链接生成失败：${e.message}）\n`;
+    console.warn(`tempfile 上传失败（已用 GitHub raw 链接代替）: ${e.message}`);
   }
 
   const keys = loadSendKeys();
@@ -277,7 +278,7 @@ async function main() {
     console.log('PushPlus 未配置，跳过（需要 PUSHPLUS_TOKEN 或 pushplus.token）');
   }
 
-  console.log('下载链接:', downloadUrl);
+  console.log('临时下载链接:', backupUrl);
   if (okCount === 0) process.exit(1);
   if (failedCount > 0) console.warn(`部分发送失败：Server酱 ${keys.length} 个 key + PushPlus（失败 ${failedCount} 处）`);
 }

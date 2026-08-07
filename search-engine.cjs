@@ -80,6 +80,13 @@ function ensureMatchHeaders(ws) {
 
 function log(msg) {
   const ts = new Date().toISOString().replace('T', ' ').slice(0, 19);
+  try {
+    if (fs.existsSync('daily-log.txt') && fs.statSync('daily-log.txt').size > 5 * 1024 * 1024) {
+      const archive = `daily-log-${ts.slice(0, 10)}.txt`;
+      if (!fs.existsSync(archive)) fs.renameSync('daily-log.txt', archive);
+      else fs.unlinkSync('daily-log.txt');
+    }
+  } catch (e) { /* ignore */ }
   fs.appendFileSync('daily-log.txt', `[${ts}] ${msg}\n`);
   console.log(`[${ts}] ${msg}`);
 }
@@ -706,6 +713,190 @@ if (mode === 'check') {
 } else if (mode === 'summary') {
   updateSummary().catch(e => log(`更新汇总失败: ${e.message}`));
 
+} else if (mode === 'report') {
+  // 生成自包含 HTML 日报页面 index.html + .nojekyll（供 GitHub Pages 托管）
+  (async () => {
+    try {
+      const wb = await readExcel();
+      const ws = wb.getWorksheet('招聘信息');
+      if (!ws) { console.error('招聘信息表不存在'); process.exit(1); }
+
+      const jobs = [];
+      ws.eachRow((row, ri) => {
+        if (ri === 1) return;
+        const company = (row.getCell(2).value || '').toString().trim();
+        const position = (row.getCell(3).value || '').toString().trim();
+        if (!company && !position) return;
+        const matchScore = parseInt(row.getCell(9).value) || 0;
+        const legacyScore = parseInt(row.getCell(7).value) || 0;
+        const score = matchScore > 0 ? matchScore : legacyScore * 10;
+        jobs.push({
+          date: String(row.getCell(1).value || '').slice(0, 10),
+          company,
+          position,
+          requirement: (row.getCell(4).value || '').toString(),
+          location: (row.getCell(5).value || '').toString(),
+          url: (row.getCell(6).value || '').toString(),
+          score,
+          note: (row.getCell(8).value || '').toString(),
+          dims: (row.getCell(10).value || '').toString(),
+          apply_reason: (row.getCell(11).value || '').toString(),
+          resume_advice: (row.getCell(12).value || '').toString(),
+        });
+      });
+
+      const now = new Date();
+      const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      const todayJobs = jobs.filter(j => j.date === today).sort((a, b) => b.score - a.score);
+      const strong = jobs.filter(j => j.score >= 80);
+      const recToday = todayJobs.filter(j => j.score >= 80);
+      const total = jobs.length;
+      const recTotal = strong.length;
+
+      function esc(s) {
+        return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+      }
+
+      function jobRow(j, highlight) {
+        const link = j.url ? `<a href="${esc(j.url)}" target="_blank" rel="noopener">🔗</a>` : '—';
+        const scoreCls = j.score >= 80 ? 's80' : (j.score >= 60 ? 's60' : '');
+
+        const note = j.note || '';
+        const reason = note.split('|').pop().trim();
+        const detail = [];
+
+        if (j.requirement) detail.push(`<div class="ditem"><span class="dtag">📋 岗位要求</span><div class="dval">${esc(j.requirement)}</div></div>`);
+        if (reason && reason !== '暂无') detail.push(`<div class="ditem"><span class="dtag">💡 匹配理由</span><div class="dval">${esc(reason)}</div></div>`);
+        if (j.dims) detail.push(`<div class="ditem"><span class="dtag">🎯 维度评分</span><div class="dval">${esc(j.dims)}</div></div>`);
+        if (j.apply_reason) detail.push(`<div class="ditem"><span class="dtag">✍️ 为什么投递</span><div class="dval">${esc(j.apply_reason)}</div></div>`);
+        if (j.resume_advice) detail.push(`<div class="ditem"><span class="dtag">📝 简历修改建议</span><div class="dval">${esc(j.resume_advice)}</div></div>`);
+
+        const inner = detail.length > 0 ? `<div class="dwrap">${detail.join('')}</div>` : '';
+
+        return `<tr class="${highlight ? 'today' : ''}">
+          <td colspan="6">
+            <details>
+              <summary>
+                <span class="s-date">${esc(j.date)}</span>
+                <span class="s-co">${esc(j.company)}</span>
+                <span class="s-po">${esc(j.position)}</span>
+                <span class="s-loc">${esc(j.location)}</span>
+                <span class="s-score ${scoreCls}">${j.score || '—'}</span>
+                <span class="s-link">${link}</span>
+              </summary>
+              ${inner}
+            </details>
+          </td>
+        </tr>`;
+      }
+
+      const todayRows = todayJobs.length > 0
+        ? todayJobs.map(j => jobRow(j, true)).join('')
+        : `<tr><td colspan="6" class="empty">今日暂无新增岗位</td></tr>`;
+
+      const strongRows = strong.length > 0
+        ? strong.slice(0, 200).map(j => jobRow(j, false)).join('')
+        : `<tr><td colspan="6" class="empty">暂无强烈推荐岗位</td></tr>`;
+
+      const allRows = jobs.length > 0
+        ? [...jobs].sort((a, b) => b.score - a.score).slice(0, 500).map(j => jobRow(j, false)).join('')
+        : `<tr><td colspan="6" class="empty">暂无岗位数据</td></tr>`;
+
+      const todayCount = todayJobs.length;
+      const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+      const html = `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>求职日报 ${dateStr}</title>
+<style>
+  :root { --red:#c0392b; --dark:#1f2d3d; --bg:#f5f7fa; --line:#e4e9f0; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; background:var(--bg); color:var(--dark); }
+  .wrap { max-width:1000px; margin:0 auto; padding:16px; }
+  header { background:linear-gradient(135deg,#c0392b,#e17055); color:#fff; border-radius:12px; padding:18px 20px; }
+  header h1 { margin:0; font-size:20px; }
+  header .sub { margin-top:6px; font-size:13px; opacity:.9; }
+  .cards { display:flex; gap:12px; flex-wrap:wrap; margin:16px 0; }
+  .card { flex:1 1 140px; background:#fff; border-radius:10px; padding:14px; text-align:center; box-shadow:0 1px 3px rgba(0,0,0,.06); }
+  .card .num { font-size:26px; font-weight:700; color:var(--red); }
+  .card .lab { font-size:12px; color:#7a8898; margin-top:4px; }
+  h2 { font-size:16px; margin:22px 0 10px; }
+  table { width:100%; border-collapse:collapse; background:#fff; border-radius:10px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,.06); }
+  th,td { padding:9px 10px; text-align:left; border-bottom:1px solid var(--line); font-size:13px; }
+  th { background:#f0f3f8; font-weight:600; white-space:nowrap; }
+  details { width:100%; }
+  details summary { list-style:none; display:flex; align-items:center; gap:10px; cursor:pointer; padding:9px 10px; flex-wrap:wrap; }
+  details summary::-webkit-details-marker { display:none; }
+  details summary::before { content:'▸'; color:#c0392b; font-size:11px; flex:0 0 auto; }
+  details[open] summary::before { content:'▾'; }
+  details[open] summary { background:#fdf0ee; }
+  summary .s-date { width:80px; color:#7a8898; font-size:12px; flex:0 0 auto; }
+  summary .s-co { font-weight:600; flex:1 1 140px; min-width:120px; }
+  summary .s-po { flex:2 1 160px; min-width:120px; }
+  summary .s-loc { width:70px; color:#7a8898; flex:0 0 auto; }
+  summary .s-score { width:44px; text-align:center; font-weight:700; flex:0 0 auto; }
+  summary .s-link { flex:0 0 auto; }
+  tr.today summary { background:#fdf0ee; }
+  td.score { text-align:center; font-weight:700; }
+  .s80 { color:var(--red); }
+  .s60 { color:#e67e22; }
+  .empty { text-align:center; color:#a0aab5; padding:20px; }
+  .tblwrap { overflow-x:auto; border-radius:10px; }
+  .dwrap { padding:10px 14px; border-top:1px dashed var(--line); background:#fafbfd; }
+  .ditem { margin:7px 0; font-size:13px; line-height:1.55; }
+  .dtag { display:inline-block; font-weight:700; color:var(--red); margin-right:8px; }
+  .dval { color:#3a4a5c; }
+  footer { margin:20px 0 30px; color:#7a8898; font-size:12px; text-align:center; }
+  a { color:#c0392b; text-decoration:none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>📊 求职日报</h1>
+    <div class="sub">${dateStr} 更新 · 数据来自 求职记录.xlsx · 校园招聘/应届生优先 · 点击岗位行查看详情</div>
+  </header>
+
+  <div class="cards">
+    <div class="card"><div class="num">${total}</div><div class="lab">累计岗位</div></div>
+    <div class="card"><div class="num" style="color:#e67e22;">${recTotal}</div><div class="lab">强烈推荐(≥80)</div></div>
+    <div class="card"><div class="num">${todayCount}</div><div class="lab">今日新增</div></div>
+    <div class="card"><div class="num" style="color:#e67e22;">${recToday.length}</div><div class="lab">今日推荐</div></div>
+  </div>
+
+  <h2>✨ 今日新增（${todayCount}）</h2>
+  <div class="tblwrap"><table>
+    ${todayRows}
+  </table></div>
+
+  <h2>🔥 强烈推荐岗位（${recTotal}）</h2>
+  <div class="tblwrap"><table>
+    ${strongRows}
+  </table></div>
+
+  <h2>📋 全部岗位（最多 500，按分降序）</h2>
+  <div class="tblwrap"><table>
+    ${allRows}
+  </table></div>
+
+  <footer>本页面由 search-engine.cjs report 自动生成 · 每日更新</footer>
+</div>
+</body>
+</html>
+`;
+      fs.writeFileSync('index.html', html, 'utf-8');
+      fs.writeFileSync('.nojekyll', '');
+      log(`已生成报告 index.html（${jobs.length} 条岗位）`);
+      console.log(JSON.stringify({ report: 'index.html', jobs: jobs.length, today: todayCount }));
+    } catch (e) {
+      console.error(`生成报告失败: ${e.message}`);
+      process.exit(1);
+    }
+  })();
+
 } else if (mode === 'cleanup') {
   const lockFile = `~$${path.basename(EXCEL_FILE)}`;
   if (fs.existsSync(lockFile)) {
@@ -747,6 +938,7 @@ if (mode === 'check') {
   node search-engine.cjs export-csv [f] - 导出 招聘信息 到 CSV 文本（默认 求职记录，UTF-8 带 BOM）
   node search-engine.cjs backfill <f>   - 回填智能匹配分（按 单位+岗位 匹配更新）
   node search-engine.cjs summary        - 更新汇总统计表
+  node search-engine.cjs report         - 生成自包含 HTML 日报 index.html（供 GitHub Pages）
   node search-engine.cjs cleanup        - 清理临时锁文件
   node search-engine.cjs daily          - 每日搜索准备`);
 }
