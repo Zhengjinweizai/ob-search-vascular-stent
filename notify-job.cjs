@@ -23,6 +23,37 @@ function loadSendKeys() {
   return list;
 }
 
+function loadPushPlusConfig() {
+  let token = (process.env.PUSHPLUS_TOKEN || '').trim();
+  if (!token) {
+    try {
+      token = fs.readFileSync('pushplus.token', 'utf8').split(/\r?\n/)[0].trim();
+    } catch (e) { /* ignore */ }
+  }
+  if (!token) return null;
+  return {
+    token,
+    topic: (process.env.PUSHPLUS_TOPIC || '').trim() || undefined,
+  };
+}
+
+async function sendPushPlus(cfg, title, desp) {
+  const body = { token: cfg.token, title, content: desp, template: 'markdown' };
+  if (cfg.topic) body.topic = cfg.topic;
+
+  const res = await fetch('https://www.pushplus.plus/send', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+
+  const result = await res.json();
+  if (result.code === 200) {
+    return { ok: true, data: result.data };
+  }
+  return { ok: false, data: result };
+}
+
 function pad2(n) {
   return String(n).padStart(2, '0');
 }
@@ -201,12 +232,20 @@ async function main() {
     return;
   }
 
-  const downloadUrl = await uploadExcel('求职记录.xlsx');
-  desp += `📎 **求职记录.xlsx 在线下载：** [点击下载](${downloadUrl})（有效期 48h）\n`;
+  let downloadUrl = null;
+  try {
+    downloadUrl = await uploadExcel('求职记录.xlsx');
+    desp += `📎 **求职记录.xlsx 在线下载：** [点击下载](${downloadUrl})（有效期 48h）\n`;
+  } catch (e) {
+    console.warn(`Excel 上传失败，本次日报不含下载链接: ${e.message}`);
+    desp += `📎 求职记录.xlsx 已同步到 GitHub 仓库（下载链接生成失败：${e.message}）\n`;
+  }
 
   const keys = loadSendKeys();
+  const ppCfg = loadPushPlusConfig();
   let okCount = 0;
-  const failed = [];
+  let failedCount = 0;
+
   for (let i = 0; i < keys.length; i++) {
     const apiUrl = `https://sctapi.ftqq.com/${keys[i]}.send`;
     const res = await fetch(apiUrl, {
@@ -218,15 +257,29 @@ async function main() {
     const result = await res.json();
     if (result.code === 0) {
       okCount++;
-      console.log(`推送成功[${i + 1}/${keys.length}] pushid:`, result.data?.pushid);
+      console.log(`Server酱 推送成功[${i + 1}/${keys.length}] pushid:`, result.data?.pushid);
     } else {
-      console.error(`推送失败[${i + 1}/${keys.length}]:`, JSON.stringify(result));
-      failed.push(i + 1);
+      console.error(`Server酱 推送失败[${i + 1}/${keys.length}]:`, JSON.stringify(result));
+      failedCount++;
     }
   }
+
+  if (ppCfg) {
+    const pp = await sendPushPlus(ppCfg, title, desp);
+    if (pp.ok) {
+      okCount++;
+      console.log(`PushPlus 推送成功${ppCfg.topic ? `（群组 ${ppCfg.topic}）` : ''} 流水号:`, pp.data);
+    } else {
+      console.error('PushPlus 推送失败:', JSON.stringify(pp.data));
+      failedCount++;
+    }
+  } else {
+    console.log('PushPlus 未配置，跳过（需要 PUSHPLUS_TOKEN 或 pushplus.token）');
+  }
+
   console.log('下载链接:', downloadUrl);
   if (okCount === 0) process.exit(1);
-  if (failed.length > 0) console.warn(`部分发送失败，失败序号: ${failed.join(', ')}（共 ${keys.length} 个 key）`);
+  if (failedCount > 0) console.warn(`部分发送失败：Server酱 ${keys.length} 个 key + PushPlus（失败 ${failedCount} 处）`);
 }
 
 main().catch(e => { console.error('Error:', e.message); process.exit(1); });
