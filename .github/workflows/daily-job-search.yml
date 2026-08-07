@@ -33,6 +33,7 @@ jobs:
         run: npm install -g opencode-ai
 
       - name: 运行每日任务AI抓取 + 智能匹配 + 生成CSV
+        timeout-minutes: 60
         run: |
           opencode run --auto --format json < .opencode/daily-search-prompt.md
 
@@ -48,4 +49,5 @@ jobs:
           git config user.email "actions@github.com"
           git add 求职记录.xlsx 求职记录 index.html .nojekyll portals.yml 2>/dev/null || true
           git commit -m "自动更新招聘信息 $(date +%F)" --allow-empty
+          git pull --rebase --autostash -X theirs origin main
           git push
