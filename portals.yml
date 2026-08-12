@@ -217,10 +217,10 @@ search_queries:
     query: 'site:maimai.cn 医疗器械 OR 血管支架 OR 研发'
     enabled: true
   - name: "中国研究生招聘网 — 科研"
-    query: 'site:91yjs.com 医疗器械 OR 生物医用材料 OR 博士后 OR 招聘'
+    query: 'site:91yjs.com 医疗器械 OR 生物医用材料 OR 招聘'
     enabled: true
-  - name: "学术桥 — 博后/教职"
-    query: 'site:acabridge.cn 医疗器械 OR 生物医学 OR 博士后 OR 招聘'
+  - name: "学术桥 — 科研/教职"
+    query: 'site:acabridge.cn 医疗器械 OR 生物医学 OR 研发 招聘'
     enabled: true
 
   # --- 微信公众号 ---
@@ -231,7 +231,7 @@ search_queries:
     query: 'site:mp.weixin.qq.com "高才医学" 医疗器械 OR 介入 OR 研发'
     enabled: true
   - name: "公众号 — BioArt"
-    query: 'site:mp.weixin.qq.com "BioArt" 医疗器械 OR 生物医学 OR 博后 OR 招聘'
+    query: 'site:mp.weixin.qq.com "BioArt" 医疗器械 OR 生物医学 OR 招聘'
     enabled: true
   - name: "公众号 — iNature"
     query: 'site:mp.weixin.qq.com "iNature" 医疗器械 OR 生物材料 OR 招聘'
@@ -487,4 +487,64 @@ tracked_companies:
   - name: 鱼跃医疗
     careers_url: https://www.yuyue.com.cn/
     tags: [medical-device, general]
+    enabled: true
+  - name: 心玮医疗
+    careers_url: https://www.heartcare.com.cn/
+    tags: [medical-device, neuro-interventional]
+    enabled: true
+  - name: 微创神通（MicroPort Neuro）
+    careers_url: https://www.microport.com/
+    tags: [medical-device, neuro-interventional]
+    enabled: true
+  - name: 华脉泰科
+    careers_url: https://www.hmtech.com.cn/
+    tags: [medical-device, aortic]
+    enabled: true
+  - name: 佰仁医疗
+    careers_url: https://www.baiymd.com/
+    tags: [medical-device, structural-heart]
+    enabled: true
+  - name: 冠昊生物
+    careers_url: https://www.grandhopebio.com/
+    tags: [biomaterial, regenerative]
+    enabled: true
+  - name: 正海生物
+    careers_url: https://www.zhbio.com.cn/
+    tags: [biomaterial, regenerative]
+    enabled: true
+  - name: 昊海生科
+    careers_url: https://www.hhbiotech.com/
+    tags: [biomaterial, general]
+    enabled: true
+  - name: 迈普医学
+    careers_url: https://www.medprin.com/
+    tags: [biomaterial, 3d-printing]
+    enabled: true
+  - name: 奥精医疗
+    careers_url: https://www.allgens.com/
+    tags: [biomaterial, bone-repair]
+    enabled: true
+  - name: 大博医疗
+    careers_url: https://www.doublemedical.com/
+    tags: [medical-device, orthopedics]
+    enabled: true
+  - name: 威高集团
+    careers_url: https://www.weigaogroup.com/
+    tags: [medical-device, general]
+    enabled: true
+  - name: 圣博玛
+    careers_url: https://www.sbmaterial.com.cn/
+    tags: [biomaterial, biodegradable]
+    enabled: true
+  - name: 中科院金属研究所
+    careers_url: https://www.imr.cas.cn/
+    tags: [research, biomaterial]
+    enabled: true
+  - name: 中科院宁波材料所
+    careers_url: https://www.nimte.cas.cn/
+    tags: [research, biomaterial]
+    enabled: true
+  - name: 四川大学生物材料工程技术研究中心
+    careers_url: https://bmc.scu.edu.cn/
+    tags: [research, biomaterial]
     enabled: true
