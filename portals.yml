@@ -118,6 +118,68 @@ search_queries:
     query: 'site:job.ustc.edu.cn 医疗器械 OR 生物医学 OR 研发 招聘'
     enabled: true
 
+  # --- 985/211 高校就业网（扩面新增） ---
+  - name: "复旦就业网 — 医疗器械"
+    query: 'site:fudan.edu.cn 医疗器械 OR 生物医学 OR 研发 招聘'
+    enabled: true
+  - name: "南京大学就业网 — 医疗器械"
+    query: 'site:nju.edu.cn 医疗器械 OR 生物医学 OR 研发 招聘'
+    enabled: true
+  - name: "中山大学就业网 — 医疗器械"
+    query: 'site:sysu.edu.cn 医疗器械 OR 生物医学 OR 研发 招聘'
+    enabled: true
+  - name: "华中科技大学就业网 — 医疗器械"
+    query: 'site:hust.edu.cn 医疗器械 OR 生物医学 OR 材料 招聘'
+    enabled: true
+  - name: "东南大学就业网 — 医疗器械"
+    query: 'site:seu.edu.cn 医疗器械 OR 生物医学工程 OR 材料 招聘'
+    enabled: true
+  - name: "西安交大就业网 — 医疗器械"
+    query: 'site:xjtu.edu.cn 医疗器械 OR 生物医学 OR 材料 招聘'
+    enabled: true
+  - name: "哈工大就业网 — 医疗器械"
+    query: 'site:hit.edu.cn 医疗器械 OR 生物医学 OR 材料 招聘'
+    enabled: true
+  - name: "天津大学就业网 — 医疗器械"
+    query: 'site:tju.edu.cn 医疗器械 OR 生物医学 OR 材料 招聘'
+    enabled: true
+  - name: "同济就业网 — 医疗器械"
+    query: 'site:tongji.edu.cn 医疗器械 OR 生物医学 OR 材料 招聘'
+    enabled: true
+  - name: "南开就业网 — 医疗器械"
+    query: 'site:nankai.edu.cn 医疗器械 OR 生物医学 OR 材料 招聘'
+    enabled: true
+  - name: "山东大学就业网 — 医疗器械"
+    query: 'site:sdu.edu.cn 医疗器械 OR 生物医学 OR 材料 招聘'
+    enabled: true
+  - name: "厦门大学就业网 — 医疗器械"
+    query: 'site:xmu.edu.cn 医疗器械 OR 生物医学 OR 材料 招聘'
+    enabled: true
+  - name: "大连理工就业网 — 医疗器械"
+    query: 'site:dlut.edu.cn 医疗器械 OR 生物医学 OR 材料 招聘'
+    enabled: true
+  - name: "华南理工就业网 — 医疗器械"
+    query: 'site:scut.edu.cn 医疗器械 OR 生物医学 OR 材料 招聘'
+    enabled: true
+  - name: "北理工就业网 — 医疗器械"
+    query: 'site:bit.edu.cn 医疗器械 OR 生物医学 OR 材料 招聘'
+    enabled: true
+  - name: "电子科大就业网 — 医疗器械"
+    query: 'site:uestc.edu.cn 医疗器械 OR 生物医学 OR 材料 招聘'
+    enabled: true
+  - name: "中南大学就业网 — 医疗器械"
+    query: 'site:csu.edu.cn 医疗器械 OR 生物医学 OR 材料 招聘'
+    enabled: true
+  - name: "兰州大学就业网 — 医疗器械"
+    query: 'site:lzu.edu.cn 医疗器械 OR 生物医学 OR 材料 招聘'
+    enabled: true
+  - name: "苏州大学就业网 — 医疗器械"
+    query: 'site:suda.edu.cn 医疗器械 OR 生物医学 OR 材料 招聘'
+    enabled: true
+  - name: "南方科技大学就业网 — 医疗器械"
+    query: 'site:sustech.edu.cn 医疗器械 OR 生物医学 OR 材料 招聘'
+    enabled: true
+
   # --- 主流招聘平台（新增） ---
   - name: "应届生求职网 — 血管介入"
     query: 'site:yingjiesheng.com 血管支架 OR 介入 OR 医疗器械 研发 应届生'
@@ -133,6 +195,32 @@ search_queries:
     enabled: true
   - name: "医药英才网 — 介入器械研发"
     query: 'site:healthr.com 介入 OR 医疗器械 OR 血管支架 研发'
+    enabled: true
+
+  # --- 主流招聘平台（扩面新增） ---
+  - name: "牛客网 — 校招研发"
+    query: 'site:nowcoder.com 医疗器械 OR 生物医用材料 OR 研发 校招'
+    enabled: true
+  - name: "实习僧 — 校招/实习"
+    query: 'site:shixiseng.com 医疗器械 OR 介入 OR 研发 校招'
+    enabled: true
+  - name: "海投网 — 校招"
+    query: 'site:haitou.cc 医疗器械 OR 生物医学 OR 研发 校招'
+    enabled: true
+  - name: "大街网 — 研发"
+    query: 'site:dajie.com 医疗器械 OR 介入 OR 研发'
+    enabled: true
+  - name: "拉勾网 — 研发"
+    query: 'site:lagou.com 医疗器械 OR 生物医用材料 OR 研发'
+    enabled: true
+  - name: "脉脉 — 内推/岗位"
+    query: 'site:maimai.cn 医疗器械 OR 血管支架 OR 研发'
+    enabled: true
+  - name: "中国研究生招聘网 — 科研"
+    query: 'site:91yjs.com 医疗器械 OR 生物医用材料 OR 博士后 OR 招聘'
+    enabled: true
+  - name: "学术桥 — 博后/教职"
+    query: 'site:acabridge.cn 医疗器械 OR 生物医学 OR 博士后 OR 招聘'
     enabled: true
 
   # --- 微信公众号 ---
@@ -193,6 +281,66 @@ university_career_sites:
   - name: 中国科学技术大学就业信息网
     url: https://www.job.ustc.edu.cn/
     enabled: true
+  - name: 复旦大学学生职业发展教育服务中心
+    url: https://career.fudan.edu.cn/
+    enabled: true
+  - name: 南京大学学生就业指导中心
+    url: https://njucareer.nju.edu.cn/
+    enabled: true
+  - name: 中山大学学生就业指导中心
+    url: https://career.sysu.edu.cn/
+    enabled: true
+  - name: 华中科技大学就业信息网
+    url: https://job.hust.edu.cn/
+    enabled: true
+  - name: 东南大学就业指导中心
+    url: https://jyzd.seu.edu.cn/
+    enabled: true
+  - name: 西安交通大学学生就业创业指导服务中心
+    url: https://job.xjtu.edu.cn/
+    enabled: true
+  - name: 哈尔滨工业大学就业信息网
+    url: https://career.hit.edu.cn/
+    enabled: true
+  - name: 天津大学就业指导中心
+    url: https://job.tju.edu.cn/
+    enabled: true
+  - name: 同济大学学生就业指导中心
+    url: https://tj91.tongji.edu.cn/
+    enabled: true
+  - name: 南开大学学生就业指导中心
+    url: https://career.nankai.edu.cn/
+    enabled: true
+  - name: 山东大学学生就业创业指导中心
+    url: https://career.sdu.edu.cn/
+    enabled: true
+  - name: 厦门大学学生就业创业指导中心
+    url: https://jyzd.xmu.edu.cn/
+    enabled: true
+  - name: 大连理工大学招生就业处
+    url: https://career.dlut.edu.cn/
+    enabled: true
+  - name: 华南理工大学学生就业指导中心
+    url: https://career.scut.edu.cn/
+    enabled: true
+  - name: 北京理工大学就业信息网
+    url: https://job.bit.edu.cn/
+    enabled: true
+  - name: 电子科技大学学生就业指导中心
+    url: https://career.uestc.edu.cn/
+    enabled: true
+  - name: 中南大学就业信息网
+    url: https://job.csu.edu.cn/
+    enabled: true
+  - name: 兰州大学学生就业指导与服务中心
+    url: https://job.lzu.edu.cn/
+    enabled: true
+  - name: 苏州大学就业信息网
+    url: https://scc.suda.edu.cn/
+    enabled: true
+  - name: 南方科技大学就业指导中心
+    url: https://career.sustech.edu.cn/
+    enabled: true
 
 # 微信公众号渠道（用 websearch 搜索 site:mp.weixin.qq.com + 账号名 + 关键词）
 wechat_accounts:
@@ -209,6 +357,26 @@ wechat_accounts:
   - name: 生物探索
     enabled: true
   - name: 成功就业
+    enabled: true
+  - name: 生物世界
+    enabled: true
+  - name: 转化医学网
+    enabled: true
+  - name: 医脉通
+    enabled: true
+  - name: 梅斯医学
+    enabled: true
+  - name: 丁香园
+    enabled: true
+  - name: 中国生物技术网
+    enabled: true
+  - name: 科研圈
+    enabled: true
+  - name: 高分子科学前沿
+    enabled: true
+  - name: 医疗器械创新网
+    enabled: true
+  - name: 医械汇
     enabled: true
 
 tracked_companies:
@@ -271,4 +439,52 @@ tracked_companies:
   - name: 北京道生济医疗
     careers_url: https://www.zhaopin.com/companydetail/CZ690750720.htm
     tags: [medical-device, interventional]
+    enabled: true
+  - name: 美敦力（中国）
+    careers_url: https://www.medtronic.com/cn-zh/careers.html
+    tags: [medical-device, cardiovascular]
+    enabled: true
+  - name: 强生医疗（Cordis）
+    careers_url: https://www.jnjmedicaldevices.com/zh-CN
+    tags: [medical-device, interventional]
+    enabled: true
+  - name: 雅培（中国）
+    careers_url: https://www.abbott.com.cn/careers.html
+    tags: [medical-device, cardiovascular]
+    enabled: true
+  - name: 泰尔茂（中国）
+    careers_url: https://www.terumo.com.cn/
+    tags: [medical-device, interventional]
+    enabled: true
+  - name: 启明医疗
+    careers_url: https://www.venusmedtech.com
+    tags: [medical-device, structural-heart]
+    enabled: true
+  - name: 沛嘉医疗
+    careers_url: https://www.peijiamedical.com
+    tags: [medical-device, structural-heart]
+    enabled: true
+  - name: 心泰医疗
+    careers_url: https://www.mediheart.cn
+    tags: [medical-device, structural-heart]
+    enabled: true
+  - name: 惠泰医疗
+    careers_url: https://www.huitechmedical.com
+    tags: [medical-device, electrophysiology]
+    enabled: true
+  - name: 微电生理
+    careers_url: https://www.ep-med.com
+    tags: [medical-device, electrophysiology]
+    enabled: true
+  - name: 迈瑞医疗
+    careers_url: https://www.mindray.com/cn/careers.html
+    tags: [medical-device, monitor]
+    enabled: true
+  - name: 联影医疗
+    careers_url: https://www.united-imaging.com/cn/
+    tags: [medical-device, imaging]
+    enabled: true
+  - name: 鱼跃医疗
+    careers_url: https://www.yuyue.com.cn/
+    tags: [medical-device, general]
     enabled: true
