@@ -30,7 +30,7 @@
     "@freely01/opencode-notify": "^0.5.2",
     "@openpets/excel": "^1.0.1",
     "exceljs": "^4.4.0",
-    "job-forge": "^2.14.81",
+    "job-forge": "^2.14.82",
     "js-yaml": "^5.2.2"
   }
 }
