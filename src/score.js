@@ -167,7 +167,8 @@ class Scorer {
   constructor({ http, profile, apiKey, baseUrl, model, concurrency = 3 }) {
     this.http = http;
     this.profile = profile;
-    this.apiKey = apiKey || process.env.DEEPSEEK_API_KEY || '';
+    // 显式传 apiKey（含空串）优先于环境变量：测试与本地 dry-run 需要能"强制禁用"
+    this.apiKey = apiKey !== undefined ? String(apiKey) : process.env.DEEPSEEK_API_KEY || '';
     this.baseUrl = (baseUrl || process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com').replace(/\/$/, '');
     this.model = model || process.env.DEEPSEEK_MODEL || 'deepseek-chat';
     this.concurrency = Math.max(1, concurrency);

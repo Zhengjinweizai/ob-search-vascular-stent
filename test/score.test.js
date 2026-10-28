@@ -79,10 +79,26 @@ test('heuristicScores：无 key 时给出确定性分数', () => {
 });
 
 test('Scorer：没有 API key 时 enabled=false 并走启发式', async () => {
+  // 注意：CI 的 job env 里有 DEEPSEEK_API_KEY，这里必须验证"显式传空串"能覆盖环境变量，
+  // 否则这个用例在 Actions 上会失败（曾经就失败过）。
   const scorer = new Scorer({ http: { postJson: async () => ({ ok: true, status: 200, text: '{}', json: {} }) }, profile, apiKey: '' });
   assert.equal(scorer.enabled, false);
   const out = await scorer.scoreJob(job);
   assert.equal(out.heuristic, true);
+});
+
+test('Scorer：显式空 apiKey 优先于环境变量（CI 环境回归）', () => {
+  const saved = process.env.DEEPSEEK_API_KEY;
+  process.env.DEEPSEEK_API_KEY = 'env-should-be-ignored';
+  try {
+    const off = new Scorer({ profile, apiKey: '' });
+    assert.equal(off.enabled, false, '显式空串应禁用，不受环境变量影响');
+    const on = new Scorer({ profile });
+    assert.equal(on.enabled, true, '未显式传时应回落到环境变量');
+  } finally {
+    if (saved === undefined) delete process.env.DEEPSEEK_API_KEY;
+    else process.env.DEEPSEEK_API_KEY = saved;
+  }
 });
 
 test('Scorer：模型返回非法 JSON 时重试后失败', async () => {
