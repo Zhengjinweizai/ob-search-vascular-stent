@@ -133,7 +133,10 @@ async function sendServerChan(key, title, markdown) {
   const url = `https://sctapi.ftqq.com/${encodeURIComponent(key)}.send`;
   const res = await postJson(url, { title, desp: markdown });
   const ok = res.ok && (res.json?.code === 0 || res.json?.data?.pushid);
-  return { channel: 'serverchan', ok, status: res.status, detail: res.text.slice(0, 200) };
+  // ServerChan 免费版每个 key 每天 5 条，超出返回 code 40001：
+  // 这是"额度用完"，不是配置错误，多 key 场景下不该让整条流水线失败。
+  const quota = res.json?.code === 40001;
+  return { channel: 'serverchan', ok, quota, status: res.status, detail: res.text.slice(0, 200) };
 }
 
 async function sendPushPlus({ token, topic }, title, markdown) {
@@ -175,4 +178,13 @@ async function notify(root, opts = {}) {
   return { counts, results, okCount, failed: results.length - okCount };
 }
 
-module.exports = { notify, buildMessage, sendServerChan, sendPushPlus, siteUrl, excelRawUrl, loadServerChanKeys };
+/**
+ * 推送步骤的退出码：只要有一个渠道送达就算成功。
+ * 约定：0 = 至少一个渠道成功；1 = 全部失败或没有配置任何渠道。
+ */
+function deliveryExitCode({ results = [], okCount = 0 } = {}) {
+  if (!results.length) return 1;
+  return okCount > 0 ? 0 : 1;
+}
+
+module.exports = { notify, buildMessage, sendServerChan, sendPushPlus, siteUrl, excelRawUrl, loadServerChanKeys, deliveryExitCode };

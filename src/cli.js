@@ -281,7 +281,11 @@ async function cmdNotify(args) {
   store.writeRunLog(root, today, { stage: 'notify', ...res });
   if (dryRun) return 0;
   if (!res.results.length) return 1; // 配了 workflow 却没配推送 key，视为失败，交给告警
-  return res.failed > 0 ? 1 : 0;
+  const { deliveryExitCode } = require('./derive/notify');
+  const quota = res.results.filter((r) => r.quota).length;
+  if (quota) console.log(`   注意：${quota} 个 ServerChan key 当天额度已用完（免费版 5 条/天），已跳过`);
+  if (res.okCount === 0) console.log('!! 所有推送渠道都失败了');
+  return deliveryExitCode(res);
 }
 
 async function cmdWeekly(args) {

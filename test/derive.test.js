@@ -128,3 +128,10 @@ test('notify：dry-run 不外发并返回统计', async () => {
   assert.equal(res.counts.strong, 1);
   assert.ok(logs.join('\n').includes('求职日报'));
 });
+
+test('deliveryExitCode：有一个渠道送达就算成功（ServerChan 额度耗尽是常态）', () => {
+  const { deliveryExitCode } = require('../src/derive/notify');
+  assert.equal(deliveryExitCode({ results: [{ ok: false, quota: true }, { ok: true }], okCount: 1 }), 0);
+  assert.equal(deliveryExitCode({ results: [{ ok: false }, { ok: false }], okCount: 0 }), 1, '全失败才失败');
+  assert.equal(deliveryExitCode({ results: [], okCount: 0 }), 1, '没配渠道视为失败');
+});
