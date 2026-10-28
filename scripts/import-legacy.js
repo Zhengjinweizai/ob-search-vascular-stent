@@ -127,13 +127,23 @@ function legacyJobsFromSheet(ws, config) {
     const total = Number.isFinite(totalRaw) && totalRaw > 0 ? totalRaw : legacyScore7 ? legacyScore7 * 10 : null;
     if (total == null) problems.noScore += 1;
 
+    // 历史行补齐统一 gate 结构（action/reasons），供网页与 Excel 一致消费。
+    // 注意：历史行的分数来自旧流程，不参与"强推"（见 derive/excel.js isLegacy）。
     const gateReasons = [];
-    if (urlCanonical && !isSearchOrPortalUrl(urlRaw)) gateReasons.push('url_verified_pending');
-    if (city && cities.includes(city)) gateReasons.push(city === (search.cities.core || []).find((c) => c === city) ? 'city_core' : 'city_extended');
     const familyOk = familyAllowed(search, family);
     const cityOk = Boolean(city && cities.includes(city));
     const urlOk = Boolean(urlCanonical && !isSearchOrPortalUrl(urlRaw));
-    if (familyOk) gateReasons.push('family_allowed');
+    const text = `${titleRaw} ${requirement}`;
+    const postdoc = (search.education?.postdoc_keywords || ['博士后', '博后']).some((k) => text.includes(k));
+    const phdOnly = /仅限博士|仅招博士|只招博士|博士研究生/.test(text);
+    let gateAction = 'keep';
+    if (!urlOk) { gateAction = 'skip'; gateReasons.push('url_invalid'); }
+    else if (postdoc) { gateAction = 'skip'; gateReasons.push('postdoc'); }
+    else if (phdOnly) { gateAction = 'skip'; gateReasons.push('phd_only'); }
+    else if (!city) { gateAction = 'review'; gateReasons.push('city_unknown'); }
+    else if (!cityOk) { gateAction = 'skip'; gateReasons.push('city'); }
+    else gateReasons.push(city === (search.cities.core || []).find((c) => c === city) ? 'city_core' : 'city_extended');
+    if (familyOk && gateAction === 'keep') gateReasons.push('family_allowed');
     if (campus) gateReasons.push('campus');
 
     jobs.push({
@@ -170,7 +180,7 @@ function legacyJobsFromSheet(ws, config) {
       },
       why_apply: whyApply,
       resume_tips: resumeTips,
-      gate: { passed: urlOk && familyOk && cityOk, reasons: gateReasons },
+      gate: { action: gateAction, passed: gateAction === 'keep', reasons: gateReasons },
       version: 1,
     });
   }

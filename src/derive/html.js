@@ -118,14 +118,23 @@ function writeHtml(root, opts = {}) {
 
   const withScore = jobs.filter((j) => typeof j.total === 'number').sort((a, b) => b.total - a.total);
   const rec = recommendJobs(jobs, profile, today);
+  // 校招公告（kind=announcement）：只有公司+届别信息，不适合当"岗位"打分排序，
+  // 单独成区，避免被低分埋没——这正是"多看本专业应届生校招"的入口。
+  const announcements = jobs
+    .filter((j) => j.kind === 'announcement')
+    .sort((a, b) => String(b.first_seen || '').localeCompare(String(a.first_seen || '')));
   const todayJobs = jobs.filter((j) => j.first_seen === today);
-  const unexpired = withScore.filter((j) => !j.deadline || daysLeftText(j, today) !== '已截止');
   const families = [...new Set(jobs.map((j) => j.job_family || '其他'))].sort();
   const cities = [...new Set(jobs.flatMap((j) => j.cities || []))].sort();
 
   const sections = [
     rec.length
       ? `<section><h2>强烈推荐（${rec.length}）</h2>${rec.map((j) => jobCard(j, profile, today)).join('\n')}</section>`
+      : '',
+    announcements.length
+      ? `<section><h2>校招公告（${announcements.length}）</h2><p class="sub">公告是公司级信息（含 2027 届校招入口），点开进官网看具体岗位；不参与"强推"评分。</p>${announcements
+          .map((j) => jobCard(j, profile, today))
+          .join('\n')}</section>`
       : '',
     todayJobs.length
       ? `<section><h2>今日新增（${todayJobs.length}）</h2>${todayJobs.map((j) => jobCard(j, profile, today)).join('\n')}</section>`
@@ -150,7 +159,7 @@ function writeHtml(root, opts = {}) {
   <div class="card"><b>${jobs.length}</b><span>累计岗位</span></div>
   <div class="card"><b>${rec.length}</b><span>强烈推荐</span></div>
   <div class="card"><b>${todayJobs.length}</b><span>今日新增</span></div>
-  <div class="card"><b>${unexpired.length}</b><span>未截止</span></div>
+  <div class="card"><b>${announcements.length}</b><span>校招公告</span></div>
 </div>
 <div class="toolbar">
   <input id="q" type="search" placeholder="搜索公司 / 岗位 / 地点 / 要求关键词…">
@@ -164,7 +173,7 @@ ${sections}
 </body></html>`;
 
   fs.writeFileSync(outFile, html);
-  return { file: outFile, total: jobs.length, recommend: rec.length, todayAdded: todayJobs.length };
+  return { file: outFile, total: jobs.length, recommend: rec.length, todayAdded: todayJobs.length, announcements: announcements.length };
 }
 
 module.exports = { writeHtml, jobCard, esc };

@@ -85,11 +85,17 @@ function isExpired(job, today) {
   return d ? d < today : false;
 }
 
+function isLegacy(job) {
+  return job.source === 'legacy_xlsx' || Boolean(job.legacy);
+}
+
 function recommendJobs(jobs, profile, today) {
   const th = profile?.thresholds || { strong: 88 };
   return jobs
     .filter((j) => {
       if (j.gate?.action !== 'keep') return false;
+      // 历史导入行：分数来自旧流程（口径与现在不同），只做归档展示，不重新推荐
+      if (isLegacy(j)) return false;
       if (typeof j.total !== 'number' || j.total < th.strong) return false;
       if (j.status === 'closed') return false;
       if (j.is_search_url) return false;

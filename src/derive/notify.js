@@ -80,6 +80,7 @@ function buildMessage(jobs, profile, { today = todayStr(), maxStrong = 5, maxTod
     .filter((x) => x.left !== null && x.left >= 0 && x.left <= 7)
     .sort((a, b) => a.left - b.left);
   const campusNew = todayNew.filter((j) => j.campus);
+  const annNew = jobs.filter((j) => j.kind === 'announcement' && j.first_seen === today);
 
   const title = `📊 【求职日报】${today} · 新增${todayNew.length} 强推${strong.length}`;
   const lines = [];
@@ -87,13 +88,21 @@ function buildMessage(jobs, profile, { today = todayStr(), maxStrong = 5, maxTod
   if (todayNew.length) {
     lines.push('');
     for (const j of todayNew.slice(0, maxToday)) {
-      const score = typeof j.total === 'number' ? j.total : '待评分';
-      lines.push(`- **${j.title}** @ ${j.company}（${(j.cities || []).join('、') || '地点未知'}）${j.campus ? ' [校招]' : ''} · ${score} 分`);
+      const score = typeof j.total === 'number' ? `${j.total} 分` : '待评分';
+      lines.push(`- **${j.title}** @ ${j.company}（${(j.cities || []).join('、') || '地点未知'}）${j.campus ? ' [校招]' : ''} · ${score}`);
       lines.push(`  ${j.url_canonical || j.url}${j.deadline ? ` · 截止 ${j.deadline}` : ''}`);
     }
     if (todayNew.length > maxToday) lines.push(`- …还有 ${todayNew.length - maxToday} 条，见网页`);
   } else {
     lines.push('', '今天没有抓到新岗位（可能不是校招季，或源站没有更新）。');
+  }
+  if (annNew.length) {
+    lines.push('', `### 今日新开校招公告 ${annNew.length} 条（点开看具体岗位）`);
+    for (const j of annNew.slice(0, 6)) {
+      lines.push(`- **${j.company}**（${(j.cities || []).join('、') || '地点未知'}）${j.deadline ? ` · 截止 ${j.deadline}` : ''}`);
+      lines.push(`  ${j.url_canonical || j.url}`);
+    }
+    if (annNew.length > 6) lines.push(`- …还有 ${annNew.length - 6} 条，见网页`);
   }
   if (strong.length) {
     lines.push('', `### 值得优先投（总分 ≥ ${profile?.thresholds?.strong ?? 88} 且通过硬规则）`);
