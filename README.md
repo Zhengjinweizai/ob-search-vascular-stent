@@ -1,41 +1,170 @@
-**1. 每日自动检索（GitHub Actions 定时，北京时间 08:00）**
-- 覆盖 **25 个域名渠道**：猎聘、前程无忧、智联、BOSS直聘等主流平台；国家大学生就业服务平台、中国公共招聘网等国家级平台；11 所高校就业网；15 家目标企业官网；7 个招聘公众号
-- 每日全量重搜 + 自动去重，不会漏岗位
+# 求职检索与推送（生物医学工程硕士 · 血管支架方向）
 
-**2. AI 智能匹配评分（5 维加权）**
-- 按能力模型 `profile_model.yml` 对每个岗位打分：研究方向(0.35) + 技能(0.30) + 学历(0.15) + 行业(0.10) + 企业类型(0.10)
-- ≥80 强烈推荐（进「推荐投递」表、微信优先展示）；60-79 值得考虑；<60 暂不推荐
-- 每个岗位附匹配理由、为什么投递、简历修改建议
+每天北京时间 **08:00**，GitHub Actions 自动执行：
 
-**3. 数据管理（Excel）**
-- `求职记录.xlsx`：招聘信息 / 投递情况 / 推荐投递 / 汇总统计 四张表
-- 投递、面试、拒信全流程跟踪，自动生成 CSV 便于版本管理
+```
+抓取（高校就业网 / 企业官网）→ 清洗去重 → 硬规则过滤 → DeepSeek 六维评分（带证据）
+→ 生成 Excel + 网页日报 + 微信推送（周一加发周报）
+```
 
-**4. 微信多通道推送**
-- ServerChan + PushPlus 双通道并行，任一失败不影响整体
-- 推送：标题（含今日新增/推荐数）+ 正文摘要 + 历史累计 + 网页链接 + Excel 下载链接（GitHub raw 永久链接）
-- 支持一对多群组（PushPlus 群组 / ServerChan 多 key）
+网页日报：<https://zhengjinweizai.github.io/ob-search-vascular-stent/>
 
-**5. HTML 网页日报（GitHub Pages）**
-- 今日新增 / 强烈推荐 / 全部岗位三区，手机友好
-- 点击岗位行展开完整细节（岗位要求、匹配理由、维度评分、投递建议）
-- 每日自动更新：`https://Zhengjinweizai.github.io/ob-search-vascular-stent/`
+> 本仓库是「方案 B（采集重构）」的落地版本。旧版依赖 opencode 让 AI 自己上网搜（实际没有搜索工具，每天在 60 分钟超时边缘），
+> 且 80 分就算"强推"导致 80% 岗位都被标成强推。新版把抓取交给脚本、把推荐口径改成"先过硬规则，再按分排序"。
 
-**6. 一键可配置（`search-config.yml`）**
-- 改关键词、排除词、城市、岗位类型、自定义搜索查询——只改一个文件
+---
 
-## 🛠 技术栈
-- **AI 执行**：opencode（DeepSeek 模型）
-- **脚本**：Node.js + ExcelJS + js-yaml
-- **自动化**：GitHub Actions 定时调度 + 自动提交
-- **托管**：GitHub Pages
+## 目录结构
 
-## 📦 使用
-1. 在仓库 Settings → Secrets 配置 `DEEPSEEK_API_KEY`、`SERVERCHAN_SENDKEY`、`PUSHPLUS_TOKEN`（可选 `PUSHPLUS_TOPIC`）
-2. 按需修改 `search-config.yml` 中的搜索关键词/范围
-3. 每天北京时间 08:00 自动运行，也可在 Actions 手动触发
+```
+src/
+  cli.js                 命令行入口：crawl / process / score / publish / notify / weekly / run / check
+  config.js              配置加载与校验（配置错了启动即报错）
+  date.js                北京时间日期工具（todayStr / parseDate / daysUntil / isCampusSeason）
+  http.js                抓取客户端：并发上限、超时、重试、退避
+  normalize.js           URL 规范化 / 公司名归一 / 岗位名归一 / 城市识别 / 岗位族判断
+  store.js               JSONL 存储：jobs.jsonl 主库、raw 原始池、review、runs、applications
+  sources/               数据源适配器（univ-announcement / html-list）
+  extract.js             统一字段抽取（id、岗位族、校招、城市、日期、相关度）
+  validate.js            URL 分类（深链/栏目页/搜索页）与 HTTP 存活校验（带缓存）
+  filter.js              硬规则闸门（过期/搜索页/仅博/博士后/组织排除/城市/经验放宽转人工）
+  score.js               DeepSeek 六维评分：严格 JSON、每维必须有原文证据、总分由脚本重算
+  derive/
+    excel.js             四表工作簿（招聘信息 / 推荐投递 / 投递情况 / 汇总统计）
+    html.js              静态日报网页（搜索、岗位族/城市/校招筛选、截止倒计时）
+    notify.js            ServerChan / PushPlus 推送
+    weekly.js            周报（本周新增、截止提醒、投递漏斗）
+    level.js             分数 → 档位文案
+data/
+  jobs.jsonl             唯一事实来源：全部岗位（含评分/证据/状态）
+  applications.json      投递记录（手动维护，Excel 的「投递情况」表由它派生）
+  raw/YYYY-MM.jsonl      原始抓取池（只追加，可回放）
+  runs/YYYY-MM-DD.json   每次运行的漏斗与失败原因
+  reports/weekly-*.md    周报存档
+test/                    68 项单元/结构测试（node --test）
+sources.yml              数据源清单（enabled 开关）
+search-config.yml        城市、岗位族、经验阈值、相关度词表
+profile_model.yml        候选人画像、六维权重、评分锚点、阈值
+scripts/import-legacy.js 旧版 Excel → jobs.jsonl 的一次性迁移脚本
+```
 
-## ⚠️ 说明
-- 本仓库为公开仓库，`求职记录.xlsx`（含投递记录）会随发布公开，请知悉
-- 定时任务触发时间以 GitHub Actions 实际调度为准，可能略有延迟
-- 推送正文在 ServerChan 免费版仅显示标题（正文建议通过 PushPlus 或网页查看）
+---
+
+## 常用命令
+
+```bash
+npm test                      # 68 项测试
+npm run crawl                 # 抓取（--full 全量翻页）
+npm run process               # 抽取 + 去重 + URL 校验 + 硬规则过滤，写入主库
+npm run score                 # DeepSeek 评分（需要 DEEPSEEK_API_KEY；--recheck 重评）
+npm run publish               # 生成求职记录.xlsx + index.html（--no-notify 不推送）
+npm run notify                # 只推送微信日报（--dry-run 只打印）
+npm run weekly                # 生成周报（--push 同时推送）
+npm run check                 # 配置与数据自检
+npm run migrate               # 从旧版 求职记录.xlsx 再迁移一次（幂等）
+```
+
+环境变量（GitHub Secrets）：
+
+| 变量 | 用途 | 必需 |
+| --- | --- | --- |
+| `DEEPSEEK_API_KEY` | 评分（deepseek-chat） | 是 |
+| `DEEPSEEK_MODEL` | 模型名，默认 `deepseek-chat` | 否 |
+| `SERVERCHAN_SENDKEY` | ServerChan 推送（逗号分隔多个 key） | 二选一 |
+| `PUSHPLUS_TOKEN` / `PUSHPLUS_TOPIC` | PushPlus 推送 | 二选一 |
+
+本地调试想跳过 AI 评分：`node src/cli.js score --allow-heuristic`（分数会标记 `heuristic: true`，不要用于线上）。
+抓取需要外网；评分不跑时 `publish` 仍可生成"待评分"的网页与表格。
+
+---
+
+## 每日流程（.github/workflows/daily-job-search.yml）
+
+1. `npm ci` + `npm test`
+2. `crawl`：按 `sources.yml` 逐源抓取，失败源写入 `runs` 并在日志里标红
+3. `process`：抽取 → 同批去重 → URL 存活校验（搜索页直接判无效）→ 硬规则 → 主库
+4. `score`：仅对"通过硬规则且未评分"的岗位调用 DeepSeek，每维必须给原文证据
+5. `publish --no-notify`：生成 Excel 与网页
+6. 提交 `data/jobs.jsonl`、`求职记录.xlsx`、`index.html`（先提交，保证手机端 raw 链接是当天文件）
+7. `notify`：微信日报
+8. 周一追加 `weekly --push`
+9. 任何一步失败 → ServerChan 失败告警（不再静默丢一天）
+
+调度：cron `0 0 * * *` + `TZ=Asia/Shanghai`。GitHub 定时任务通常会延迟 1–6 小时，实际运行时间不保证 08:00 整。
+
+---
+
+## 数据模型（jobs.jsonl）
+
+| 字段 | 说明 |
+| --- | --- |
+| `id` | `sha1(url_canonical \| company_norm \| title_norm)`，稳定去重键 |
+| `source` / `kind` | 来源 id；`announcement`（校招公告）或 `position`（具体岗位） |
+| `company` / `company_norm` | 公司原名与归一名（括号、城市前缀、法律后缀、别名表） |
+| `title` / `title_norm` | 岗位名与归一名（去掉届别、校招、括号） |
+| `job_family` | 研发 / 注册法规 / 质量 / 工艺制造 / 技术支持 / 其他 |
+| `campus` | 是否校招/应届友好 |
+| `cities` / `city_raw` | 识别出的城市列表与原始地点文本 |
+| `education_req` / `major_req` / `exp_req` | 学历、专业、经验要求（抽取所得） |
+| `posted_at` / `deadline` / `first_seen` / `last_seen` | 发布时间、截止、首次发现、最近见到 |
+| `url` / `url_canonical` / `url_quality` / `url_status` | 链接、规范化链接、深链/栏目页/搜索页、HTTP 状态 |
+| `gate` | `{action: keep\|review\|skip, reasons: []}` |
+| `scores` / `evidence` / `total` | 六维分、每维原文证据、脚本按权重重算的总分 |
+| `status` | `active` / `closed` / `unknown`（人工或复核脚本维护） |
+
+> 旧表 12 列仍在 Excel「招聘信息」表前 12 列中，兼容历史阅读习惯；第 13–16 列是岗位族/是否校招/截止/状态。
+> 分数只用于排序；**是否推荐由硬规则决定**，`thresholds.strong = 88` 只是"优先级"分界。
+
+---
+
+## 新增数据源
+
+`sources.yml` 目前支持两种适配器：
+
+```yaml
+sources:
+  - id: xjtu_campus              # 高校就业网（token + 公告列表接口）
+    adapter: univ-announcement
+    base_url: https://job.xjtu.edu.cn
+    daily_pages: 8               # 每天增量翻几页（--full 走 max_pages）
+    page_size: 100
+    enabled: true
+
+  - id: endovastec_social        # 企业静态列表页（cheerio）
+    adapter: html-list
+    url: https://www.endovastec.com/SocialRecruitment/
+    company: 心脉医疗
+    item_selector: "ul[id^='ul24'] li"
+    title_selector: p:first-child
+    location_selector: p:nth-of-type(2)
+    city_fallback: 上海
+    enabled: true
+```
+
+新增源时先 `curl` 确认「服务端渲染、无验证码、列表链接可预测」，抓不到就设 `enabled: false`，
+不要靠 AI 去"搜"——那正是旧版 URL 大面积不可核验的原因。抓取统计会写进 `data/runs/`，覆盖率可度量。
+
+---
+
+## 已知限制（有意为之，不是 bug）
+
+- **只接入实测可用的源**：目前是西安交大/大连理工就业网（企业校招公告）+ 心脉医疗社招列表。猎聘/BOSS/智联/jobui 均为 JS 渲染或验证码，纯 fetch 抓不到；高校公告详情页也是模板壳，只能当深链给浏览器打开。
+- **企业静态列表大多没有岗位深链**（心脉的 `<a href="javascript:;">`），这类记录 `url_quality=company_page`，网页/表格里会标注，仍需点开人工确认。
+- **大连理工公告没有城市字段** → 城市未知的进 `data/review.jsonl` 人工复核，不直接丢弃。
+- **经验 ≥3 年的社招**：命中"应届/优秀应届/可放宽/接受应届/无经验/实习转正"→ 转人工复核；否则丢弃（校招身份豁免）。
+- **不做岗位失效自动下线**（v1 范围外）：`status` 目前靠人工/后续脚本维护。
+- **公开仓库**：`data/applications.json`（投递记录）随仓库公开——按你的要求保留，没有做脱敏。
+
+---
+
+## 回滚与排障
+
+- 每次运行的漏斗、失败源、URL 统计都在 `data/runs/YYYY-MM-DD.json`。
+- 想看某天抓到了什么：`data/raw/YYYY-MM.jsonl`（只追加，可回放重跑 `process`）。
+- 评分失败会进 `data/review.jsonl`（`reason: score_failed`），不会静默丢。
+- 想回旧流程：`git revert` 到方案 B 之前的提交（旧 `search-engine.cjs` / `notify-job.cjs` 已在 PR5 删除，可从历史恢复）。
+
+## 迁移
+
+`npm run migrate` 会把旧版 `求职记录.xlsx`（12 列）转成 `data/jobs.jsonl`：
+同 URL+同公司合并、泛称岗位不合并、投递记录转 `data/applications.json`。迁移是幂等的，重复跑不会产生重复行。

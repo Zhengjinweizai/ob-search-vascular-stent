@@ -8,6 +8,7 @@
  *   node src/cli.js score [--recheck] [--limit=N]
  *   node src/cli.js publish [--no-notify] [--dry-run]
  *   node src/cli.js notify [--dry-run]
+ *   node src/cli.js weekly [--push]
  *   node src/cli.js run [--full]
  *   node src/cli.js check
  */
@@ -281,6 +282,24 @@ async function cmdNotify(args) {
   return res.failed > 0 ? 1 : 0;
 }
 
+async function cmdWeekly(args) {
+  const root = repoRoot();
+  const cfg = loadConfig(root);
+  const { weekly } = require('./derive/weekly');
+  const res = weekly(root, { profile: cfg.profile });
+  console.log(res.markdown);
+  console.log(`\n== 写入 ${res.file}`);
+  if (args.push) {
+    const { sendServerChan, sendPushPlus, loadServerChanKeys } = require('./derive/notify');
+    for (const key of loadServerChanKeys()) {
+      console.log(await sendServerChan(key, res.title, res.markdown));
+    }
+    const token = process.env.PUSHPLUS_TOKEN;
+    if (token) console.log(await sendPushPlus({ token, topic: process.env.PUSHPLUS_TOPIC || '' }, res.title, res.markdown));
+  }
+  return 0;
+}
+
 async function cmdRun(args) {
   const steps = [
     ['crawl', () => cmdCrawl(args)],
@@ -328,9 +347,10 @@ async function main() {
   if (cmd === 'score') return cmdScore(args);
   if (cmd === 'publish') return cmdPublish(args);
   if (cmd === 'notify') return cmdNotify(args);
+  if (cmd === 'weekly') return cmdWeekly(args);
   if (cmd === 'run') return cmdRun(args);
   if (cmd === 'check') return cmdCheck();
-  console.log('用法：node src/cli.js <crawl|process|score|publish|notify|run|check> [选项]');
+  console.log('用法：node src/cli.js <crawl|process|score|publish|notify|weekly|run|check> [选项]');
   return 2;
 }
 

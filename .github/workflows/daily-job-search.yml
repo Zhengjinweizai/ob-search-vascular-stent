@@ -75,6 +75,16 @@ jobs:
         timeout-minutes: 5
         run: node src/cli.js notify
 
+      # 周一额外发周报（校招季提示 + 截止提醒 + 投递漏斗）
+      - name: 周报（仅周一）
+        timeout-minutes: 5
+        run: |
+          if [ "$(date +%u)" = "1" ]; then
+            node src/cli.js weekly --push
+          else
+            echo "今天不是周一，跳过周报"
+          fi
+
       # 任何一步失败都推送告警（ServerChan 第一个 key），避免静默丢一天
       - name: 失败告警
         if: failure()
