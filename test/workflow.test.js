@@ -78,3 +78,13 @@ test('依赖安装使用锁定版本，提交内容包含主库', () => {
   assert.match(commit.run, /index\.html/);
   assert.match(commit.run, /求职记录\.xlsx/);
 });
+
+test('检出拉全历史，提交前 rebase 到当前分支（浅克隆会 add/add 冲突）', () => {
+  const s = steps();
+  const checkout = s.find((x) => x.name === '检出代码');
+  assert.equal(checkout.uses, 'actions/checkout@v4');
+  assert.equal(checkout.with['fetch-depth'], 0, '必须 fetch-depth: 0，否则 rebase 找不到共同祖先');
+  const commit = s.find((x) => x.name === '提交代码');
+  assert.match(commit.run, /GITHUB_REF_NAME/, 'rebase 目标应是当前分支，不能写死 main');
+  assert.ok(!/pull --rebase --autostash origin main\b/.test(commit.run), '不能写死 origin main');
+});

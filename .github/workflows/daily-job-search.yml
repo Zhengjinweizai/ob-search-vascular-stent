@@ -29,6 +29,10 @@ jobs:
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
+        with:
+          # 必须拉全历史：默认 fetch-depth: 1 是浅克隆，rebase 到 main 时找不到共同祖先，
+          # 会把所有文件当成 add/add 冲突（曾导致提交步骤整段失败）。
+          fetch-depth: 0
 
       - name: 安装 Node 20
         uses: actions/setup-node@v4
@@ -68,7 +72,13 @@ jobs:
           git add data/jobs.jsonl 求职记录.xlsx index.html .nojekyll 2>/dev/null || true
           git diff --cached --quiet && echo "无变更可提交" && exit 0
           git commit -m "自动更新招聘信息 $(date +%F)"
-          git pull --rebase --autostash origin main
+          # 用当前分支自己的远端分支做 rebase（workflow_dispatch 可能在 feat/* 上跑），
+          # 不要再写死 origin main：那只适合默认分支。
+          git pull --rebase --autostash origin "${GITHUB_REF_NAME}" || {
+            echo "!! rebase 失败：可能有人在远端同时改了这个分支";
+            git rebase --abort || true;
+            exit 1;
+          }
           git push
 
       - name: 推送微信日报
