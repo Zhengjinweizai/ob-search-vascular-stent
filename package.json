@@ -17,7 +17,8 @@
     "backfill": "node search-engine.cjs backfill",
     "daily": "node search-engine.cjs cleanup && opencode run --auto --format json < .opencode/daily-search-prompt.md",
     "test": "node --test test/*.test.js",
-    "test:watch": "node --test --watch test/"
+    "test:watch": "node --test --watch test/",
+    "migrate": "node scripts/import-legacy.js"
   },
   "keywords": [
     "job-search",

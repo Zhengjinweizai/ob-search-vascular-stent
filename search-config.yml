@@ -1,62 +1,35 @@
-# 每日搜索配置 —— 想改"搜什么/搜哪里/不搜什么"只改这个文件
-# 修改后：本地直接跑 node search-engine.cjs check 验证；GitHub 覆盖该文件即可，其余文件不用动。
+# 检索与筛选配置（方案 B v2）
+# 说明：城市名单只用于"过滤"；抓取时按 queries 组合检索，不要求渠道在这些城市。
 
-# 收录关键词：出现即进入采集范围（同时用于自动生成各平台搜索查询 + 正向标题筛选）
-keywords:
-  - 血管支架
-  - 介入
-  - 医疗器械
-  - 可降解支架
-  - 球囊
-  - 导管
-  - 镍钛
-  - 药物涂层
-  - 神经介入
-  - 生物医用材料
-  - 生物相容性
-  - 密网支架
-  - 取栓支架
-  - 全降解
-  - 冠脉支架
-  - 药物球囊
-  - 生物医学
-  - 校园招聘
-  - 应届生
-  - 研发工程师
-
-# 排除词：命中即不收录
-exclude:
-  - 销售
-  - 市场
-  - 实习
-  - 行政
-  - 财务
-  - 人事
-  - 博士后
-  - 博后
-
-# 城市范围（作为 AI 筛选提示，不改变评分权重）
 cities:
-  - 北京
-  - 上海
-  - 深圳
-  - 苏州
+  core: [北京, 上海, 深圳, 苏州]
+  extended: [杭州, 东莞, 无锡, 常州, 嘉兴, 昆山, 太仓]
 
-# 采集重点岗位类型（作为 AI 筛选提示）
-job_types:
-  - 校园招聘
-  - 应届生
-  - 校招
+# 岗位族：白名单之外的岗位一律不推荐（但仍会进 raw/主库，方便回看）
+job_families:
+  include: [研发, 注册法规, 质量, 工艺制造, 技术支持]
+  exclude: [临床医学, 销售市场, 职能]
 
-# 自动生成查询：true 时按 keywords 为每个已有平台域名生成一条聚合查询（site:域名 关键词1 OR 关键词2 …）
-# 关闭则只靠 portals.yml 原查询 + extra_queries
-gen_queries: true
+experience:
+  hard_block_years: 3
+  relax_keywords: [应届, 优秀应届, 可放宽, 接受应届, 无经验, 不限经验, 实习转正]
+  on_relax: review   # 命中放宽关键词 → 进人工复核队列，不直接丢
 
-# 自动生成查询的固定后缀（可选，比如 研发 / 招聘）
-query_suffix: 研发
+education:
+  acceptable: [硕士, 本科, 不限]
+  reject_keywords: [仅限博士, 仅招博士, 博士研究生]
+  postdoc_keywords: [博士后, 博后, 博士后研究员, 博士后工作站]
 
-# 整条自定义查询（最灵活，逐条追加）
-extra_queries:
-  - name: 自定义-密网支架
-    query: "site:zhipin.com 密网支架 OR 血流导向 研发"
-    enabled: true
+crawl:
+  concurrency: 4
+  timeout_ms: 15000
+  retries: 2
+  raw_retention_days: 30
+  max_pages_per_list: 5
+
+queries:
+  campus: [校园招聘, 校招, 应届, 2027届, 管培生, 培训生, 实习转正]
+  suffix: [生物医学工程, 医疗器械, 材料, 结构, 仿真]
+  city_suffix: [北京, 上海, 深圳, 苏州, 杭州, 东莞]
+  daily_budget: 60        # 秋招季
+  off_season_budget: 15   # 淡季

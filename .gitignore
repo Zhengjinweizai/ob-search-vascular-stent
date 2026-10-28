@@ -14,3 +14,9 @@ new-jobs.json
 match-output.json
 .opencode/logs/
 *.log
+
+# 方案 B：原始池与运行日志不入库（可回放，但体积大且含临时抓取内容）
+data/raw/
+data/runs/
+data/candidates.jsonl
+data/review.jsonl
