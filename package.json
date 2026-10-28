@@ -16,7 +16,8 @@
     "report": "node search-engine.cjs report",
     "backfill": "node search-engine.cjs backfill",
     "daily": "node search-engine.cjs cleanup && opencode run --auto --format json < .opencode/daily-search-prompt.md",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test test/*.test.js",
+    "test:watch": "node --test --watch test/"
   },
   "keywords": [
     "job-search",
@@ -29,5 +30,8 @@
   "dependencies": {
     "exceljs": "^4.4.0",
     "js-yaml": "^5.2.2"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }
