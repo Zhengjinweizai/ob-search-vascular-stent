@@ -2,11 +2,14 @@ name: 每日招聘信息抓取
 
 on:
   schedule:
-    - cron: '0 16 * * *'   # UTC 00:00 = 北京时间 05:00
+    - cron: '0 0 * * *'   # 北京时间 08:00（GitHub 调度通常延迟 1–6 小时，实际约 09:00–14:00）
   workflow_dispatch:       # 支持手动触发
 
+# 统一时区：所有 date 命令、脚本里的 new Date() 都按北京时间
 env:
+  TZ: Asia/Shanghai
   DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+  DEEPSEEK_MODEL: deepseek-chat
   SERVERCHAN_SENDKEY: ${{ secrets.SERVERCHAN_SENDKEY }}
   PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
   PUSHPLUS_TOPIC: ${{ secrets.PUSHPLUS_TOPIC }}
@@ -14,40 +17,94 @@ env:
 permissions:
   contents: write
 
+# 避免手动触发与定时任务重叠
+concurrency:
+  group: daily-job-search
+  cancel-in-progress: false
+
 jobs:
   daily-job-search:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: 检出代码
         uses: actions/checkout@v4
+        with:
+          # 必须拉全历史：默认 fetch-depth: 1 是浅克隆，rebase 到 main 时找不到共同祖先，
+          # 会把所有文件当成 add/add 冲突（曾导致提交步骤整段失败）。
+          fetch-depth: 0
 
       - name: 安装 Node 20
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
 
-      - name: 安装项目依赖
-        run: npm install
+      - name: 安装项目依赖（锁定版本）
+        run: npm ci
 
-      - name: 安装 opencode
-        run: npm install -g opencode-ai
+      - name: 运行测试
+        run: npm test
 
-      - name: 运行每日任务AI抓取 + 智能匹配 + 生成CSV
-        timeout-minutes: 60
-        run: |
-          opencode run --auto --format json < .opencode/daily-search-prompt.md
+      # 抓取交给脚本（不再依赖 AI 有没有搜索工具）；每个源的成败都写进 data/runs
+      - name: 抓取招聘源（高校就业网 / 企业官网）
+        timeout-minutes: 20
+        run: node src/cli.js crawl
 
-      - name: 生成 HTML 网页日报（GitHub Pages）
-        run: node search-engine.cjs report
+      - name: 清洗、去重与硬规则过滤
+        timeout-minutes: 10
+        run: node src/cli.js process
 
-      - name: 上传 Excel 并推微信日报
-        run: node notify-job.cjs
+      # AI 只读已经过过滤的候选页，输出六维分 + 原文证据，总分由脚本重算
+      - name: AI 评分（DeepSeek，六维 + 证据）
+        timeout-minutes: 15
+        run: node src/cli.js score
 
+      - name: 生成 Excel 与网页日报
+        timeout-minutes: 10
+        run: node src/cli.js publish --no-notify
+
+      # 先提交再推送：保证手机端 raw 链接拿到的是当天文件
       - name: 提交代码
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-          git add 求职记录.xlsx 求职记录 index.html .nojekyll portals.yml 2>/dev/null || true
-          git commit -m "自动更新招聘信息 $(date +%F)" --allow-empty
-          git pull --rebase --autostash -X theirs origin main
+          git add data/jobs.jsonl 求职记录.xlsx index.html .nojekyll 2>/dev/null || true
+          git diff --cached --quiet && echo "无变更可提交" && exit 0
+          git commit -m "自动更新招聘信息 $(date +%F)"
+          # 用当前分支自己的远端分支做 rebase（workflow_dispatch 可能在 feat/* 上跑），
+          # 不要再写死 origin main：那只适合默认分支。
+          git pull --rebase --autostash origin "${GITHUB_REF_NAME}" || {
+            echo "!! rebase 失败：可能有人在远端同时改了这个分支";
+            git rebase --abort || true;
+            exit 1;
+          }
           git push
+
+      - name: 推送微信日报
+        timeout-minutes: 5
+        run: node src/cli.js notify
+
+      # 周一额外发周报（校招季提示 + 截止提醒 + 投递漏斗）
+      - name: 周报（仅周一）
+        timeout-minutes: 5
+        run: |
+          if [ "$(date +%u)" = "1" ]; then
+            node src/cli.js weekly --push
+          else
+            echo "今天不是周一，跳过周报"
+          fi
+
+      # 任何一步失败都推送告警（ServerChan 第一个 key），避免静默丢一天
+      - name: 失败告警
+        if: failure()
+        run: |
+          if [ -z "$SERVERCHAN_SENDKEY" ]; then
+            echo "未配置 SERVERCHAN_SENDKEY，跳过告警"; exit 0
+          fi
+          KEY="${SERVERCHAN_SENDKEY%%,*}"
+          curl -sS --max-time 10 "https://sctapi.ftqq.com/${KEY}.send" \
+            --data-urlencode "title=❌ 求职日报运行失败 $(date +%F)" \
+            --data-urlencode "desp=每日任务失败，请查看 GitHub Actions 日志：https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+            || true
+          echo "已发送失败告警"

@@ -1,0 +1,49 @@
+# 数据源配置（方案 B）
+# 只放"实测可用"的源；每类源的适配器在 src/sources/ 下。
+# 说明：高校就业网为校招公告（kind=announcement），企业官网为具体岗位（kind=position）。
+
+sources:
+  # ---- 高校就业网（西安交大模板：token + ajax_frontRecruitinfo）----
+  - id: xjtu_campus
+    label: 西安交大就业网 · 招聘公告
+    kind: univ-announcement
+    enabled: true
+    base_url: https://job.xjtu.edu.cn
+    position_type: "1"        # 1=招聘信息，2=实习信息
+    page_size: 100
+    daily_pages: 8            # 日常只翻最近 8 页（≈800 条公告）
+    max_pages: 30             # --full 时最多 30 页
+    page_delay_ms: 200
+
+  - id: dlut_campus
+    label: 大连理工就业网 · 招聘公告
+    kind: univ-announcement
+    enabled: true
+    base_url: https://job.dlut.edu.cn
+    position_type: "1"
+    page_size: 100
+    daily_pages: 8
+    max_pages: 50
+    page_delay_ms: 200
+
+  # ---- 企业官网（HTML 静态列表）----
+  - id: endovastec_social
+    label: 心脉医疗 · 社会招聘
+    kind: html-list
+    enabled: true
+    url: https://www.endovastec.com/SocialRecruitment/
+    company: 心脉医疗
+    item_selector: "ul[id^='ul24'] li"
+    title_selector: "p:first-child"
+    location_selector: "p:nth-of-type(2)"
+    link_selector: "a"
+    city_fallback: 上海
+
+  # ---- 预留：同模板的其他高校 / 企业（URL 需先实测再启用）----
+  - id: placeholder_example
+    label: 示例：新增源请先 curl 实测再启用
+    kind: html-list
+    enabled: false
+    url: https://example.com/careers
+    item_selector: "li"
+    title_selector: "a"
