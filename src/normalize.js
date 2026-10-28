@@ -15,7 +15,7 @@ const TRACKING_PARAMS = [
 
 // 搜索页 / 门户首页 / 列表页：不能当岗位链接
 const NON_JOB_URL_PATTERNS = [
-  /^https?:\/\/(www\.)?(sogou|baidu|bing|google|so)\.com\/(link|s|search)\b/i,
+  /^https?:\/\/(www\.)?(sogou|baidu|bing|google|so)\.com\b/i,
   /weixin\.sogou\.com/i,
   /^https?:\/\/(www\.)?zhipin\.com\/?(\?|$)/i,
   /^https?:\/\/(www\.)?zhipin\.com\/(web\/geek|job_detail\/?$)/i,
@@ -26,6 +26,7 @@ const NON_JOB_URL_PATTERNS = [
   /^https?:\/\/(www\.)?job\.ncss\.cn\/?(\?|$)/i,
   /^https?:\/\/www\.ncss\.cn\/?(\?|$)/i,
   /^https?:\/\/(www\.)?yingjiesheng\.com\/?(\?|$)/i,
+  /\?[^#]*(query|wd|q|key|keyword)=/i,
 ];
 
 function canonicalUrl(raw) {
