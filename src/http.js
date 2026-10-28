@@ -91,6 +91,23 @@ class HttpClient {
     }
   }
 
+  async postJson(url, body, options = {}) {
+    return this.request(url, {
+      ...options,
+      method: 'POST',
+      headers: { 'content-type': 'application/json', ...(options.headers || {}) },
+      body: JSON.stringify(body || {}),
+    }).then((res) => {
+      let json = null;
+      try {
+        json = JSON.parse(res.text);
+      } catch {
+        json = null;
+      }
+      return { ...res, json };
+    });
+  }
+
   async postForm(url, body, options = {}) {
     const params = new URLSearchParams();
     for (const [k, v] of Object.entries(body || {})) {

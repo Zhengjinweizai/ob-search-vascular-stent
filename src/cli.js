@@ -5,6 +5,10 @@
  * 用法：
  *   node src/cli.js crawl [--full] [--only=xjtu_campus,dlut_campus]
  *   node src/cli.js process [--all] [--no-validate]
+ *   node src/cli.js score [--recheck] [--limit=N]
+ *   node src/cli.js publish [--no-notify] [--dry-run]
+ *   node src/cli.js notify [--dry-run]
+ *   node src/cli.js run [--full]
  *   node src/cli.js check
  */
 
@@ -16,6 +20,10 @@ const { crawlAll, enabledSources } = require('./sources');
 const { extractCandidate } = require('./extract');
 const { gate } = require('./filter');
 const { UrlValidator } = require('./validate');
+const { Scorer } = require('./score');
+const { writeExcel } = require('./derive/excel');
+const { writeHtml } = require('./derive/html');
+const { notify } = require('./derive/notify');
 
 function parseArgs(argv) {
   const args = { _: [] };
@@ -24,6 +32,11 @@ function parseArgs(argv) {
     else if (token === '--all') args.all = true;
     else if (token === '--no-validate') args.noValidate = true;
     else if (token.startsWith('--only=')) args.only = token.slice(7).split(',').filter(Boolean);
+    else if (token.startsWith('--limit=')) args.limit = Number(token.slice(8));
+    else if (token === '--no-notify') args.noNotify = true;
+    else if (token === '--dry-run') args.dryRun = true;
+    else if (token === '--recheck') args.recheck = true;
+    else if (token === '--allow-heuristic') args.allowHeuristic = true;
     else if (token.startsWith('--')) args[token.slice(2)] = true;
     else args._.push(token);
   }
@@ -136,6 +149,12 @@ async function cmdProcess(args) {
 
   store.writeJsonl(store.defaultPaths(root).candidates, keep);
   store.writeJsonl(store.defaultPaths(root).review, review);
+
+  // 通过硬规则的岗位写入主库（评分在下一步；upsert 会保留旧的 first_seen/评分）
+  const merged = store.upsertJobs(
+    root,
+    keep.map((job) => ({ ...job, last_seen: today, status: job.status || 'active', entered_at: today })),
+  );
   const runLog = {
     funnel: {
       ...funnel,
@@ -149,9 +168,134 @@ async function cmdProcess(args) {
       return acc;
     }, {}),
   };
-  store.writeRunLog(root, todayStr(), { stage: 'process', ...runLog });
-  log(`== 写入 data/candidates.jsonl（${keep.length} 条）与 data/review.jsonl（${review.length} 条）`);
-  return keep.length > 0 ? 0 : 1;
+  runLog.mainDb = { added: merged.added, updated: merged.updated, total: merged.records.length };
+  store.writeRunLog(root, today, { stage: 'process', ...runLog });
+  log(`== 写入 data/candidates.jsonl（${keep.length} 条）、data/review.jsonl（${review.length} 条）、主库新增 ${merged.added} / 更新 ${merged.updated}（共 ${merged.records.length}）`);
+  return raw.length === 0 ? 1 : 0;
+}
+
+
+async function cmdScore(args) {
+  const root = repoRoot();
+  const cfg = loadConfig(root);
+  const today = todayStr();
+  const jobs = store.readJobs(root);
+  // 默认只评"通过硬规则且还没评分"的岗位；--recheck 重评全部 keep 岗位
+  const targets = jobs.filter((j) => {
+    if (j.gate?.action !== 'keep') return false;
+    if (args.recheck) return true;
+    return typeof j.total !== 'number';
+  });
+  const limit = args.limit ? Number(args.limit) : targets.length;
+  const batch = targets.slice(0, Math.max(0, limit));
+  const http = makeHttp(cfg);
+  const scorer = new Scorer({ http, profile: cfg.profile, concurrency: 3 });
+  if (!scorer.enabled) {
+    if (!args.allowHeuristic) {
+      console.error('!! 未设置 DEEPSEEK_API_KEY：评分步骤中止（本地调试可加 --allow-heuristic）');
+      return 1;
+    }
+    console.log('!! 未设置 DEEPSEEK_API_KEY：使用启发式评分（仅用于本地开发，不要用于线上推荐）');
+  }
+  console.log(`== 评分 ${batch.length}/${targets.length} 条（模型 ${scorer.model}）`);
+  const results = await scorer.scoreJobs(batch, {
+    onProgress: (done, total) => {
+      if (done % 5 === 0 || done === total) console.log(`   ${done}/${total}`);
+    },
+  });
+  const updated = [];
+  const failed = [];
+  for (const r of results) {
+    if (!r) continue;
+    if (r.error) {
+      failed.push({ id: r.job.id, company: r.job.company, title: r.job.title, error: r.error });
+      continue;
+    }
+    const job = {
+      ...r.job,
+      scores: r.scored.scores,
+      evidence: r.scored.evidence,
+      why_apply: r.scored.why_apply,
+      resume_tips: r.scored.resume_tips,
+      total: r.scored.total,
+      scored_at: today,
+      scored_by: scorer.enabled ? scorer.model : 'heuristic',
+      heuristic: Boolean(r.scored.heuristic),
+    };
+    updated.push(job);
+  }
+  const res = store.upsertJobs(root, updated);
+  console.log(`   评分成功 ${updated.length}，失败 ${failed.length}，写入后主库 ${res.records.length} 条`);
+  if (failed.length) {
+    console.log(`   失败样例：${failed.slice(0, 5).map((f) => `${f.company}/${f.title}: ${f.error}`).join(' | ')}`);
+    const paths = store.defaultPaths(root);
+    store.appendJsonl(paths.review, failed.map((f) => ({ ...f, reviewed_at: today, reason: 'score_failed' })));
+  }
+  store.writeRunLog(root, today, {
+    stage: 'score',
+    model: scorer.model,
+    heuristic: !scorer.enabled,
+    targets: targets.length,
+    scored: updated.length,
+    failed: failed.length,
+    tokens: scorer.stats.tokens,
+  });
+  return failed.length === 0 || updated.length > 0 ? 0 : 1;
+}
+
+async function cmdPublish(args) {
+  const root = repoRoot();
+  const cfg = loadConfig(root);
+  const today = todayStr();
+  const jobs = store.readJobs(root);
+  console.log(`== 派生输出（主库 ${jobs.length} 条）`);
+  const excel = await writeExcel(root, { jobs, profile: cfg.profile, today });
+  console.log(`   求职记录.xlsx：招聘信息 ${excel.stats.total} 条 / 强推 ${excel.stats.recommend} 条`);
+  const html = writeHtml(root, { jobs, profile: cfg.profile, today });
+  console.log(`   index.html：${html.total} 条（今日新增 ${html.todayAdded}，强推 ${html.recommend}）`);
+  let notifyResult = null;
+  if (!args.noNotify) {
+    notifyResult = await notify(root, { jobs, profile: cfg.profile, today, dryRun: Boolean(args.dryRun) });
+  }
+  store.writeRunLog(root, today, {
+    stage: 'publish',
+    jobs: excel.stats.total,
+    recommend: excel.stats.recommend,
+    todayAdded: html.todayAdded,
+    notify: notifyResult ? { dryRun: Boolean(notifyResult.dryRun), counts: notifyResult.counts, ok: notifyResult.okCount, failed: notifyResult.failed } : null,
+  });
+  if (notifyResult && !notifyResult.dryRun && notifyResult.okCount === 0 && notifyResult.results.length > 0) return 1;
+  return 0;
+}
+
+async function cmdNotify(args) {
+  const root = repoRoot();
+  const cfg = loadConfig(root);
+  const today = todayStr();
+  const jobs = store.readJobs(root);
+  const dryRun = Boolean(args.dryRun);
+  const res = await notify(root, { jobs, profile: cfg.profile, today, dryRun });
+  store.writeRunLog(root, today, { stage: 'notify', ...res });
+  if (dryRun) return 0;
+  if (!res.results.length) return 1; // 配了 workflow 却没配推送 key，视为失败，交给告警
+  return res.failed > 0 ? 1 : 0;
+}
+
+async function cmdRun(args) {
+  const steps = [
+    ['crawl', () => cmdCrawl(args)],
+    ['process', () => cmdProcess(args)],
+    ['score', () => cmdScore(args)],
+    ['publish', () => cmdPublish(args)],
+  ];
+  for (const [name, fn] of steps) {
+    const code = await fn();
+    if (code !== 0) {
+      console.log(`!! 步骤 ${name} 失败（退出码 ${code}），停止后续步骤`);
+      return code;
+    }
+  }
+  return 0;
 }
 
 function cmdCheck() {
@@ -181,8 +325,12 @@ async function main() {
   const cmd = args._[0];
   if (cmd === 'crawl') return cmdCrawl(args);
   if (cmd === 'process') return cmdProcess(args);
+  if (cmd === 'score') return cmdScore(args);
+  if (cmd === 'publish') return cmdPublish(args);
+  if (cmd === 'notify') return cmdNotify(args);
+  if (cmd === 'run') return cmdRun(args);
   if (cmd === 'check') return cmdCheck();
-  console.log('用法：node src/cli.js <crawl|process|check> [选项]');
+  console.log('用法：node src/cli.js <crawl|process|score|publish|notify|run|check> [选项]');
   return 2;
 }
 

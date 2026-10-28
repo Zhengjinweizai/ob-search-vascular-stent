@@ -1,7 +1,9 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
 const path = require('node:path');
+const os = require('node:os');
 const ExcelJS = require('exceljs');
 
 const { parseDimensions, dedupe, makeId, legacyJobsFromSheet } = require('../scripts/import-legacy');
@@ -65,12 +67,58 @@ test('dedupe：同 URL + 同公司合并；泛称岗位不按公司+岗位合并
   assert.equal(dedupe(specific).merged.length, 1);
 });
 
-test('从真实 求职记录.xlsx 迁移：行数、日期、公司/岗位字段完整', async () => {
+test('legacyJobsFromSheet：解析旧表结构（含搜索页 URL、维度评分）', async () => {
   const wb = new ExcelJS.Workbook();
-  await wb.xlsx.readFile(path.join(ROOT, '求职记录.xlsx'));
-  const ws = wb.getWorksheet('招聘信息');
-  const { jobs } = legacyJobsFromSheet(ws, loadConfig(ROOT));
-  assert.equal(jobs.length, 595);
+  const ws = wb.addWorksheet('招聘信息');
+  ws.addRow([
+    '日期',
+    '招聘单位名称',
+    '岗位名称',
+    '岗位要求（摘要，200字以内）',
+    '工作地点',
+    '招聘链接（URL）',
+    '匹配度评分（1-10分）',
+    '备注',
+    '智能匹配分（0-100）',
+    '维度评分',
+    '为什么投递',
+    '简历修改建议',
+  ]);
+  ws.addRow([
+    '2026-09-01',
+    '心脉医疗',
+    '血管支架研发工程师',
+    '负责支架结构设计与有限元分析',
+    '上海',
+    'https://www.endovastec.com/SocialRecruitment/',
+    9,
+    '智能匹配90分【社招】|强烈推荐|',
+    90,
+    '研究95/技能90/学历100/行业100/企业90',
+    '方向对口',
+    '突出仿真项目',
+  ]);
+  ws.addRow([
+    '2026-09-02',
+    '某医疗公司',
+    '研发工程师',
+    '血管介入器械研发',
+    '北京',
+    'https://www.sogou.com/web?query=血管支架',
+    8,
+    '智能匹配80分【社招】|值得考虑|',
+    80,
+    '研究85/技能80/学历100/行业100/企业80',
+    '',
+    '',
+  ]);
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'obs-legacy-'));
+  const file = path.join(dir, 'legacy.xlsx');
+  await wb.xlsx.writeFile(file);
+  const wb2 = new ExcelJS.Workbook();
+  await wb2.xlsx.readFile(file);
+  const { jobs } = legacyJobsFromSheet(wb2.getWorksheet('招聘信息'), loadConfig(ROOT));
+  assert.equal(jobs.length, 2);
   for (const job of jobs) {
     assert.ok(job.id);
     assert.ok(job.company);
@@ -78,6 +126,6 @@ test('从真实 求职记录.xlsx 迁移：行数、日期、公司/岗位字段
     assert.ok(isValidDateStr(job.first_seen), `${job.company}/${job.title} 日期非法：${job.first_seen}`);
     assert.ok(job.job_family);
   }
-  // 历史数据里确实存在搜索页 URL，必须被识别出来
-  assert.ok(jobs.some((j) => j.url.includes('sogou.com') || j.url.includes('baidu.com')));
+  assert.ok(jobs.some((j) => j.url.includes('sogou.com')), '搜索页 URL 必须被识别并保留待过滤');
+  assert.equal(jobs[0].scores.skill, 90);
 });

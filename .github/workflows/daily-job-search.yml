@@ -13,8 +13,6 @@ env:
   SERVERCHAN_SENDKEY: ${{ secrets.SERVERCHAN_SENDKEY }}
   PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
   PUSHPLUS_TOPIC: ${{ secrets.PUSHPLUS_TOPIC }}
-  # 临时：旧 opencode 流程只有开启该变量才有 websearch（方案 B 落地后整体移除）
-  OPENCODE_ENABLE_EXA: "1"
 
 permissions:
   contents: write
@@ -44,28 +42,38 @@ jobs:
       - name: 运行测试
         run: npm test
 
-      - name: 运行每日任务AI抓取 + 智能匹配 + 生成CSV
-        timeout-minutes: 15
-        run: |
-          opencode run --auto --format json < .opencode/daily-search-prompt.md
+      # 抓取交给脚本（不再依赖 AI 有没有搜索工具）；每个源的成败都写进 data/runs
+      - name: 抓取招聘源（高校就业网 / 企业官网）
+        timeout-minutes: 20
+        run: node src/cli.js crawl
 
-      - name: 生成 HTML 网页日报（GitHub Pages）
-        run: node search-engine.cjs report
+      - name: 清洗、去重与硬规则过滤
+        timeout-minutes: 10
+        run: node src/cli.js process
+
+      # AI 只读已经过过滤的候选页，输出六维分 + 原文证据，总分由脚本重算
+      - name: AI 评分（DeepSeek，六维 + 证据）
+        timeout-minutes: 15
+        run: node src/cli.js score
+
+      - name: 生成 Excel 与网页日报
+        timeout-minutes: 10
+        run: node src/cli.js publish --no-notify
 
       # 先提交再推送：保证手机端 raw 链接拿到的是当天文件
       - name: 提交代码
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-          git add 求职记录.xlsx 求职记录 index.html .nojekyll 2>/dev/null || true
+          git add data/jobs.jsonl 求职记录.xlsx index.html .nojekyll 2>/dev/null || true
           git diff --cached --quiet && echo "无变更可提交" && exit 0
           git commit -m "自动更新招聘信息 $(date +%F)"
           git pull --rebase --autostash origin main
           git push
 
-      - name: 上传 Excel 并推微信日报
+      - name: 推送微信日报
         timeout-minutes: 5
-        run: node notify-job.cjs
+        run: node src/cli.js notify
 
       # 任何一步失败都推送告警（ServerChan 第一个 key），避免静默丢一天
       - name: 失败告警
