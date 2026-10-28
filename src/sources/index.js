@@ -46,4 +46,14 @@ async function crawlAll(cfg, ctx) {
   return { items, stats };
 }
 
-module.exports = { crawlAll, enabledSources, ADAPTERS };
+/**
+ * 抓取退出策略：
+ * - 一个源都没抓到 → 失败（今天大概率白跑）
+ * - 部分源失败但抓到了东西 → 默认成功（GitHub 海外 runner 访问国内高校站点经常不通，
+ *   不能让一个源拖垮整条流水线）；--strict 时才要求全部源成功。
+ */
+function crawlFatal({ items = [], failed = [], strict = false } = {}) {
+  return items.length === 0 || (strict && failed.length > 0);
+}
+
+module.exports = { crawlFatal, crawlAll, enabledSources, ADAPTERS };

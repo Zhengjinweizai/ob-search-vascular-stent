@@ -90,3 +90,10 @@ test('html-list：按选择器抽岗位，无深链时回退列表页并标记 c
   assert.equal(items[0].url, 'https://www.example.com/SocialRecruitment/');
   assert.equal(items[0].city, '上海市浦东新区');
 });
+
+test('crawlFatal：部分源失败但抓到了东西 → 不算致命（海外 runner 常态）', () => {
+  const { crawlFatal } = require('../src/sources');
+  assert.equal(crawlFatal({ items: [{}], failed: [{ source: 'dlut_campus' }] }), false);
+  assert.equal(crawlFatal({ items: [{}], failed: [{ source: 'dlut_campus' }], strict: true }), true);
+  assert.equal(crawlFatal({ items: [], failed: [] }), true, '一个源都没抓到必须失败');
+});

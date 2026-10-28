@@ -17,7 +17,7 @@ const { repoRoot, loadConfig, allCities } = require('./config');
 const { HttpClient } = require('./http');
 const { todayStr } = require('./date');
 const store = require('./store');
-const { crawlAll, enabledSources } = require('./sources');
+const { crawlAll, enabledSources, crawlFatal } = require('./sources');
 const { extractCandidate } = require('./extract');
 const { gate } = require('./filter');
 const { UrlValidator } = require('./validate');
@@ -37,6 +37,7 @@ function parseArgs(argv) {
     else if (token === '--no-notify') args.noNotify = true;
     else if (token === '--dry-run') args.dryRun = true;
     else if (token === '--recheck') args.recheck = true;
+    else if (token === '--strict') args.strict = true;
     else if (token === '--allow-heuristic') args.allowHeuristic = true;
     else if (token.startsWith('--')) args[token.slice(2)] = true;
     else args._.push(token);
@@ -76,7 +77,8 @@ async function cmdCrawl(args) {
   log(`== 原始条目 ${items.length} 条（来源：${Object.entries(funnel.bySource).map(([k, v]) => `${k}=${v}`).join(', ') || '无'}）`);
   if (failed.length) log(`!! ${failed.length} 个源有问题：${failed.map((s) => s.source).join(', ')}`);
   log('写入 data/raw/' + today.slice(0, 7) + '.jsonl');
-  return failed.length === 0 && items.length > 0 ? 0 : 1;
+  if (failed.length) log('   （源级失败不阻塞流水线；需要严格模式请加 --strict）');
+  return crawlFatal({ items, failed, strict: Boolean(args.strict) }) ? 1 : 0;
 }
 
 async function cmdProcess(args) {
