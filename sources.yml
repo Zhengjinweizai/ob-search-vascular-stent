@@ -258,3 +258,27 @@ sources:
     daily_pages: 1
     max_pages: 10
     medical_hint: true
+
+  - id: bluesail_social
+    kind: beisen-portal
+    enabled: true
+    company: 蓝帆医疗
+    base_url: https://bluesail.zhiye.com
+    category: "1"
+    detail_path: /social/detail/{id}
+    page_size: 50
+    daily_pages: 1
+    max_pages: 5
+    medical_hint: true
+
+  - id: edan_social
+    kind: beisen-portal
+    enabled: true
+    company: 理邦仪器
+    base_url: https://edan.zhiye.com
+    category: "1"
+    detail_path: /social/detail/{id}
+    page_size: 50
+    daily_pages: 2
+    max_pages: 10
+    medical_hint: true
