@@ -46,7 +46,8 @@ function extractCandidate(raw, cfg, opts = {}) {
     company_norm: companyNorm(company),
     title,
     title_norm: titleNorm(title),
-    job_family: guessJobFamily(title, raw.requirement || ''),
+    // 岗位的职能看标题最准；要求正文里常混着别的部门职责，只在标题判不出时才参考正文
+    job_family: raw.kind === 'announcement' ? guessJobFamily(title, raw.requirement || '') : guessJobFamily(title),
     // 校招身份只看标题（要求的正文里常出现"应届可放宽"这类放宽词，不能据此把社招当校招）
     campus: raw.kind === 'announcement' ? true : looksCampus(title),
     cities: [],

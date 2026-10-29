@@ -26,7 +26,8 @@
   "dependencies": {
     "cheerio": "^1.2.0",
     "exceljs": "^4.4.0",
-    "js-yaml": "^5.2.2"
+    "js-yaml": "^5.2.2",
+    "playwright": "^1.64.1"
   },
   "engines": {
     "node": ">=20"

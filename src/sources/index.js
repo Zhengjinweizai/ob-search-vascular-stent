@@ -6,11 +6,13 @@
 const univAnnouncement = require('./univ-announcement');
 const htmlList = require('./html-list');
 const jsEmbed = require('./js-embed');
+const beisenPortal = require('./beisen-portal');
 
 const ADAPTERS = {
   'univ-announcement': univAnnouncement,
   'html-list': htmlList,
   'js-embed': jsEmbed,
+  'beisen-portal': beisenPortal,
 };
 
 function enabledSources(cfg) {

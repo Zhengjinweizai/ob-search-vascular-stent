@@ -149,3 +149,52 @@ sources:
     url: https://example.com/careers
     item_selector: "li"
     title_selector: "a"
+
+  # ---- 北森（Beisen）招聘门户：直接读 JSON 接口，无需浏览器 ----
+  - id: weigao_social
+    kind: beisen-portal
+    enabled: true
+    company: 威高集团
+    base_url: https://weigao.zhiye.com
+    category: "1"            # 1=社会招聘 2=校园招聘
+    detail_path: /social/detail/{id}
+    page_size: 50
+    daily_pages: 2
+    max_pages: 20
+    medical_hint: true
+
+  - id: weigao_campus
+    kind: beisen-portal
+    enabled: true
+    company: 威高集团
+    base_url: https://weigao.zhiye.com
+    category: "2"
+    detail_path: /campus/detail/{id}
+    page_size: 50
+    daily_pages: 2
+    max_pages: 20
+    medical_hint: true
+
+  - id: mindray_social
+    kind: beisen-portal
+    enabled: true
+    company: 迈瑞医疗
+    base_url: https://mindray.zhiye.com
+    category: "1"
+    detail_path: /social/detail/{id}
+    page_size: 50
+    daily_pages: 2
+    max_pages: 20
+    medical_hint: true
+
+  - id: mindray_campus
+    kind: beisen-portal
+    enabled: true
+    company: 迈瑞医疗
+    base_url: https://mindray.zhiye.com
+    category: "2"
+    detail_path: /campus/detail/{id}
+    page_size: 50
+    daily_pages: 2
+    max_pages: 20
+    medical_hint: true
