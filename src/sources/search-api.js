@@ -20,17 +20,17 @@ const PROVIDERS = {
   bocha: {
     name: 'bocha',
     envKey: 'BOCHA_API_KEY',
-    endpoint: 'https://api.bochaai.com/v1/web-search',
+    endpoint: process.env.BOCHA_ENDPOINT || 'https://api.bocha.cn/v1/web-search',
     request({ query, count }, apiKey) {
       return {
         url: this.endpoint,
-        body: { query, count, summary: true, freshness: 'oneMonth' },
+        body: { query, count, summary: true, freshness: 'noLimit' },
         headers: { authorization: `Bearer ${apiKey}`, 'content-type': 'application/json' },
       };
     },
     parse(json) {
       const pages = json?.data?.webPages?.value || [];
-      return pages.map((p) => ({ title: p.name, url: p.url, snippet: p.summary || p.snippet || '' }));
+      return pages.map((p) => ({ title: p.name, url: p.url, snippet: p.summary || p.snippet || '', date: p.datePublished || '' }));
     },
   },
   serper: {
@@ -147,7 +147,7 @@ function mapResult(result, source) {
     location_raw: parsed.city,
     education: '',
     major: '',
-    posted_at: null,
+    posted_at: (result.date || '').slice(0, 10) || null,
     deadline: null,
     requirement: snippet.slice(0, 600),
     snippet_only: true,

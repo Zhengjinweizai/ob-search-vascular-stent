@@ -321,6 +321,12 @@ sources:
       - 材料
       - 支架
       - 器械
+      - 球囊
+      - 导管
+      - 镍钛
+      - 可降解
+      - 植入
+      - 心血管
     limit: 20
     pages_per_keyword: 1
     fetch_detail: true

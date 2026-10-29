@@ -76,6 +76,7 @@ npm run migrate               # 从旧版 求职记录.xlsx 再迁移一次（�
 | `SEARCH_API_KEY` | 平台岗位检索（BOSS/猎聘/智联/51job）的 key，按 provider 自动读取 | 否（不配则跳过该源） |
 | `SEARCH_PROVIDER` | `bocha`（默认）/ `serper` / `exa` | 否 |
 | `BOCHA_API_KEY` / `SERPER_API_KEY` / `EXA_API_KEY` | 分 provider 的专用 key（优先于 `SEARCH_API_KEY`） | 否 |
+| `BOCHA_ENDPOINT` | 博查接口地址，默认 `https://api.bocha.cn/v1/web-search` | 否 |
 
 本地调试想跳过 AI 评分：`node src/cli.js score --allow-heuristic`（分数会标记 `heuristic: true`，不要用于线上）。
 抓取需要外网；评分不跑时 `publish` 仍可生成"待评分"的网页与表格。

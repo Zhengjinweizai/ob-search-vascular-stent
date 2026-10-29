@@ -28,6 +28,7 @@ const BOCHA_JSON = {
             name: '【北京 支架研发工程师招聘】-康誉医疗招聘信息-猎聘',
             url: 'https://www.liepin.com/job/1981333257.shtml?utm_source=x',
             summary: '岗位职责：负责血管支架结构设计与有限元分析，硕士及以上。',
+            datePublished: '2026-10-20T08:00:00+08:00',
           },
           {
             name: '血管介入研发工程师-鑫云生科招聘-智联招聘',
@@ -113,10 +114,11 @@ test('crawlSource：解析 provider 返回、按 URL 去重', async () => {
     assert.strictEqual(stats.results, 2);
     assert.strictEqual(stats.provider, 'bocha');
     assert.ok(calls.length >= 1);
-    assert.strictEqual(calls[0].url, 'https://api.bochaai.com/v1/web-search');
+    assert.strictEqual(calls[0].url, 'https://api.bocha.cn/v1/web-search');
     assert.strictEqual(calls[0].options.headers.authorization, 'Bearer test-key');
     assert.strictEqual(items[0].url, 'https://www.liepin.com/job/1981333257.shtml');
     assert.strictEqual(items[0].company, '康誉医疗');
+  assert.strictEqual(items[0].posted_at, '2026-10-20');
   } finally {
     if (prev === undefined) delete process.env.BOCHA_API_KEY;
     else process.env.BOCHA_API_KEY = prev;
