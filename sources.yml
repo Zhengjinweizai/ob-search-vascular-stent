@@ -326,3 +326,34 @@ sources:
     fetch_detail: true
     medical_hint: false
     concurrency: 3
+
+  # ---- 搜索引擎 API（付费通道，覆盖 BOSS/猎聘/智联/51job 等平台深链） ----
+  - id: search_portals
+    kind: search-api
+    enabled: true
+    company: ""
+    provider: bocha
+    sites:
+      - liepin.com
+      - zhipin.com
+      - zhaopin.com
+      - 51job.com
+      - jobs.51job.com
+    keywords:
+      - 血管支架
+      - 研发工程师
+      - 医疗器械
+      - 生物医学工程
+      - 介入
+      - 支架
+      - 球囊
+      - 导管
+      - 植入
+      - 可降解
+    query_suffix: 招聘
+    queries_per_day: 24
+    results_per_query: 10
+    fetch_detail: true
+    max_details: 40
+    medical_hint: false
+    concurrency: 2

@@ -8,6 +8,7 @@ const htmlList = require('./html-list');
 const jsEmbed = require('./js-embed');
 const beisenPortal = require('./beisen-portal');
 const ncss = require('./ncss');
+const searchApi = require('./search-api');
 
 const ADAPTERS = {
   'univ-announcement': univAnnouncement,
@@ -15,6 +16,7 @@ const ADAPTERS = {
   'js-embed': jsEmbed,
   'beisen-portal': beisenPortal,
   ncss,
+  'search-api': searchApi,
 };
 
 function enabledSources(cfg) {

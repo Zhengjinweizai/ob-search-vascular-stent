@@ -73,6 +73,9 @@ npm run migrate               # 从旧版 求职记录.xlsx 再迁移一次（�
 | `DEEPSEEK_MODEL` | 模型名，默认 `deepseek-chat` | 否 |
 | `SERVERCHAN_SENDKEY` | ServerChan 推送（逗号分隔多个 key） | 二选一 |
 | `PUSHPLUS_TOKEN` / `PUSHPLUS_TOPIC` | PushPlus 推送 | 二选一 |
+| `SEARCH_API_KEY` | 平台岗位检索（BOSS/猎聘/智联/51job）的 key，按 provider 自动读取 | 否（不配则跳过该源） |
+| `SEARCH_PROVIDER` | `bocha`（默认）/ `serper` / `exa` | 否 |
+| `BOCHA_API_KEY` / `SERPER_API_KEY` / `EXA_API_KEY` | 分 provider 的专用 key（优先于 `SEARCH_API_KEY`） | 否 |
 
 本地调试想跳过 AI 评分：`node src/cli.js score --allow-heuristic`（分数会标记 `heuristic: true`，不要用于线上）。
 抓取需要外网；评分不跑时 `publish` 仍可生成"待评分"的网页与表格。
@@ -149,7 +152,7 @@ sources:
 
 ## 已知限制（有意为之，不是 bug）
 
-- **只接入实测可用的源**：目前 25 个源：8 所高校就业网（西安交大、大连理工、国科大、北大、北理、北师、同济、武大，约 3400 条公告/天）+ 3 家企业自建招聘页（心脉、先健、乐普）+ 13 个北森招聘门户（威高、迈瑞、联影、沛嘉、泰尔茂、正海、蓝帆、理邦、北芯生命，含社招/校招两类）+ 国家大学生就业服务平台（ncss.cn / 24365，按关键词抓岗位并抓详情页）。
+- **只接入实测可用的源**：目前 25 个源：8 所高校就业网（西安交大、大连理工、国科大、北大、北理、北师、同济、武大，约 3400 条公告/天）+ 3 家企业自建招聘页（心脉、先健、乐普）+ 13 个北森招聘门户（威高、迈瑞、联影、沛嘉、泰尔茂、正海、蓝帆、理邦、北芯生命，含社招/校招两类）+ 国家大学生就业服务平台（ncss.cn / 24365，按关键词抓岗位并抓详情页）+ 搜索引擎 API 通道（`site:liepin.com/zhipin.com/zhaopin.com/51job.com` 关键词矩阵，按天轮换 24 条查询，需配 `SEARCH_API_KEY`）。
   猎聘/BOSS/智联/jobui 均为 JS 渲染或验证码，纯 fetch 抓不到；高校公告详情页也是模板壳，只能当深链给浏览器打开。
   `portals.yml` 保留了旧版 155 个渠道的完整清单（65 查询 / 31 高校 / 17 公众号 / 42 企业），作为后续逐个补适配器的候选池。
 - **企业静态列表大多没有岗位深链**（心脉的 `<a href="javascript:;">`），这类记录 `url_quality=company_page`，网页/表格里会标注，仍需点开人工确认。
