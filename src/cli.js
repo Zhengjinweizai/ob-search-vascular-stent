@@ -97,8 +97,17 @@ async function cmdProcess(args) {
     try {
       const job = extractCandidate(item, cfg);
       funnel.extracted += 1;
-      if (byId.has(job.id)) {
+      const existing = byId.get(job.id);
+      if (existing) {
         funnel.dupInRun += 1;
+        // 同一条岗位可能被多次抓取：保留信息更完整的那份（后来的抓取通常补全了要求与地点）
+        // 以最新一次抓取为准：旧记录可能是「反诈提示」占位文本或只到省级的地点
+        const newer = String(job.fetched_at || '') > String(existing.fetched_at || '');
+        const sameTime = String(job.fetched_at || '') === String(existing.fetched_at || '');
+        const longer = ((job.requirement || '').length + (job.location_raw || '').length)
+          >= ((existing.requirement || '').length + (existing.location_raw || '').length);
+        const richer = newer || (sameTime && longer);
+        if (richer) byId.set(job.id, { ...job, first_seen: existing.first_seen || job.first_seen });
         continue;
       }
       byId.set(job.id, job);

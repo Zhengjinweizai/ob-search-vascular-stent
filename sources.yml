@@ -306,3 +306,23 @@ sources:
     daily_pages: 2
     max_pages: 10
     medical_hint: true
+
+  # ---- 国家大学生就业服务平台（24365，校招主平台） ----
+  - id: ncss_campus
+    kind: ncss
+    enabled: true
+    company: ""
+    keywords:
+      - 血管支架
+      - 介入
+      - 医疗器械
+      - 生物医学工程
+      - 研发工程师
+      - 材料
+      - 支架
+      - 器械
+    limit: 20
+    pages_per_keyword: 1
+    fetch_detail: true
+    medical_hint: false
+    concurrency: 3
