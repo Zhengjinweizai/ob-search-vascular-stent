@@ -198,3 +198,63 @@ sources:
     daily_pages: 2
     max_pages: 20
     medical_hint: true
+
+  - id: united_imaging_social
+    kind: beisen-portal
+    enabled: true
+    company: 联影医疗
+    base_url: https://united-imaging.zhiye.com
+    category: "1"
+    detail_path: /social/detail/{id}
+    page_size: 100
+    daily_pages: 2
+    max_pages: 20
+    medical_hint: true
+
+  - id: united_imaging_campus
+    kind: beisen-portal
+    enabled: true
+    company: 联影医疗
+    base_url: https://united-imaging.zhiye.com
+    category: "2"
+    detail_path: /campus/detail/{id}
+    page_size: 100
+    daily_pages: 2
+    max_pages: 20
+    medical_hint: true
+
+  - id: peijia_social
+    kind: beisen-portal
+    enabled: true
+    company: 沛嘉医疗
+    base_url: https://peijia.zhiye.com
+    category: "1"
+    detail_path: /social/detail/{id}
+    page_size: 50
+    daily_pages: 1
+    max_pages: 10
+    medical_hint: true
+
+  - id: terumo_social
+    kind: beisen-portal
+    enabled: true
+    company: 泰尔茂医疗
+    base_url: https://terumo.zhiye.com
+    category: "1"
+    detail_path: /social/detail/{id}
+    page_size: 50
+    daily_pages: 1
+    max_pages: 10
+    medical_hint: true
+
+  - id: zhbio_social
+    kind: beisen-portal
+    enabled: true
+    company: 正海生物
+    base_url: https://zhbio.zhiye.com
+    category: "1"
+    detail_path: /social/detail/{id}
+    page_size: 50
+    daily_pages: 1
+    max_pages: 10
+    medical_hint: true
