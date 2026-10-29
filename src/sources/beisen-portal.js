@@ -20,7 +20,7 @@ function mapItem(item, source, base) {
     kind: 'position',
     company: source.company,
     title: String(item.JobAdName || '').trim(),
-    url: `${base}/${source.detail_path.replace('{id}', item.JobAdId)}`,
+    url: `${base}${(source.detail_path.startsWith('/') ? '' : '/')}${source.detail_path.replace('{id}', item.JobAdId)}`,
     url_quality: 'detail',
     city,
     location_raw: raw,
