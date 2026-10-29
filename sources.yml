@@ -282,3 +282,27 @@ sources:
     daily_pages: 2
     max_pages: 10
     medical_hint: true
+
+  - id: insight_med_social
+    kind: beisen-portal
+    enabled: true
+    company: 北芯生命
+    base_url: https://insight-med.zhiye.com
+    category: "1"
+    detail_path: /job/detail?jobAdId={id}
+    page_size: 50
+    daily_pages: 2
+    max_pages: 10
+    medical_hint: true
+
+  - id: insight_med_campus
+    kind: beisen-portal
+    enabled: true
+    company: 北芯生命
+    base_url: https://insight-med.zhiye.com
+    category: "2"
+    detail_path: /job/detail?jobAdId={id}
+    page_size: 50
+    daily_pages: 2
+    max_pages: 10
+    medical_hint: true
