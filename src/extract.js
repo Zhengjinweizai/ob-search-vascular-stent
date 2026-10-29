@@ -62,7 +62,8 @@ function extractCandidate(raw, cfg, opts = {}) {
     first_seen: todayStr(now),
     last_seen: todayStr(now),
     fetched_at: raw.fetched_at || now.toISOString(),
-    medical_relevant: hitsAny(text, relevance.keywords),
+    // 已验证的企业官网/ATS 源直接标记医疗器械行业，避免"先健科技"这类不含"医疗"字样的公司被误杀
+    medical_relevant: Boolean(raw.industry_hint) || hitsAny(text, relevance.keywords),
     org_excluded: hitsAny(company, relevance.org_exclude),
     major_relevant: hitsAny([raw.major, title, raw.requirement].filter(Boolean).join(' '), relevance.majors),
   };

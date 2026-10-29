@@ -4,6 +4,7 @@ const assert = require('node:assert/strict');
 
 const univ = require('../src/sources/univ-announcement');
 const htmlList = require('../src/sources/html-list');
+const jsEmbed = require('../src/sources/js-embed');
 
 function makeStubHttp({ token = 'tok', pages = [], listPageHtml = '' }) {
   const calls = { getJson: 0, postForm: 0, getText: 0 };
@@ -116,4 +117,35 @@ test('crawlFatal：部分源失败但抓到了东西 → 不算致命（海外 r
   assert.equal(crawlFatal({ items: [{}], failed: [{ source: 'dlut_campus' }] }), false);
   assert.equal(crawlFatal({ items: [{}], failed: [{ source: 'dlut_campus' }], strict: true }), true);
   assert.equal(crawlFatal({ items: [], failed: [] }), true, '一个源都没抓到必须失败');
+});
+
+test('js-embed：从内嵌 JS 数据抽岗位（乐普 join_data.js 形态）', async () => {
+  const js = 'var research=[{ "details" : "职位名称：质量工程师<br>工作地点：北京<br><br>岗位职责：负责质量管理" },'
+    + '{ "details" : "职位名称：支架研发工程师<br>工作地点：上海<br><br>岗位职责：负责支架结构设计" }]';
+  const http = {
+    async getText() { return { ok: true, status: 200, text: js }; },
+  };
+  const { items, stats } = await jsEmbed.crawlSource(
+    {
+      id: 'lepu',
+      url: 'https://example.com/join_data.js',
+      page_url: 'https://example.com/join',
+      company: '乐普医疗',
+      entry_pattern: '职位名称：([^<\\n]+)<br>工作地点：([^<\\n]+)',
+      requirement_chars: 60,
+    },
+    { http },
+  );
+  assert.equal(stats.fetched, 2);
+  assert.deepEqual(items.map((x) => x.title), ['质量工程师', '支架研发工程师']);
+  assert.equal(items[0].city, '北京');
+  assert.equal(items[1].company, '乐普医疗');
+  assert.match(items[0].requirement, /质量管理/);
+  assert.equal(items[0].url, 'https://example.com/join');
+  assert.equal(items[0].url_quality, 'company_page');
+});
+
+test('js-embed：缺少 entry_pattern 时报错', async () => {
+  const http = { async getText() { return { ok: true, status: 200, text: 'x' }; } };
+  await assert.rejects(jsEmbed.crawlSource({ id: 'x', url: 'https://e.com/a.js' }, { http }), /entry_pattern/);
 });

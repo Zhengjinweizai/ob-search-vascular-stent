@@ -41,7 +41,8 @@ async function crawlSource(source, ctx) {
     let link = '';
     if (source.link_selector) {
       const href = $(node).find(source.link_selector).first().attr('href') || $(node).attr('href') || '';
-      if (href && !/^javascript:/i.test(href) && href !== '#') link = new URL(href, pageUrl).toString();
+      // mailto:/tel:/javascript:/# 都不是岗位详情页：退回列表页并标记 company_page
+      if (href && !/^(javascript|mailto|tel):/i.test(href) && href !== '#') link = new URL(href, pageUrl).toString();
     }
     const key = `${title}|${location}`;
     if (seen.has(key)) return;
@@ -50,6 +51,7 @@ async function crawlSource(source, ctx) {
       source: source.id,
       kind: 'position',
       company: source.company || '',
+      industry_hint: Boolean(source.medical_hint),
       title,
       url: link || (source.link_fallback_url ? new URL(source.link_fallback_url, pageUrl).toString() : pageUrl),
       url_quality: link ? 'detail' : 'company_page',

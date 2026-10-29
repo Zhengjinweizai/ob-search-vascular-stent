@@ -5,10 +5,12 @@
 
 const univAnnouncement = require('./univ-announcement');
 const htmlList = require('./html-list');
+const jsEmbed = require('./js-embed');
 
 const ADAPTERS = {
   'univ-announcement': univAnnouncement,
   'html-list': htmlList,
+  'js-embed': jsEmbed,
 };
 
 function enabledSources(cfg) {

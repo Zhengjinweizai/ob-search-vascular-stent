@@ -111,11 +111,35 @@ sources:
     enabled: true
     url: https://www.endovastec.com/SocialRecruitment/
     company: 心脉医疗
+    medical_hint: true
     item_selector: "ul[id^='ul24'] li"
     title_selector: "p:first-child"
     location_selector: "p:nth-of-type(2)"
     link_selector: "a"
     city_fallback: 上海
+
+  - id: lifetech_social
+    label: 先健科技 · 社会招聘（官网静态列表）
+    kind: html-list
+    enabled: true
+    url: https://www.lifetechmed.com/join/jobs/community/index.aspx
+    company: 先健科技
+    medical_hint: true
+    item_selector: "dl.zw01-bd-item"
+    title_selector: "div.t1"
+    link_selector: "a"
+    city_fallback: 深圳          # 列表未给地点，按总部兜底；地点在详情页
+
+  - id: lepu_join
+    label: 乐普医疗 · 官网招聘岗位（join_data.js 内嵌数据）
+    kind: js-embed
+    enabled: true
+    url: https://www.lepumedical.com/js/join_data.js
+    page_url: https://www.lepumedical.com/join_lepu.html
+    company: 乐普医疗
+    medical_hint: true
+    entry_pattern: '职位名称：([^<\n]+)<br>工作地点：([^<\n]+)'
+    requirement_chars: 700
 
   # ---- 预留：同模板的其他高校 / 企业（URL 需先实测再启用）----
   - id: placeholder_example

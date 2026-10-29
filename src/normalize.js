@@ -197,15 +197,18 @@ const FAMILY_RULES = [
   ['工艺制造', /(工艺|制造|生产|设备|自动化|模具|装配|产线)/],
   ['临床医学', /(临床|医学|CRA|CRC|CRO|医学事务)/],
   ['技术支持', /(技术支持|应用工程|售前|售后|现场服务|技术服务)/],
-  ['销售市场', /(销售|市场|商务|渠道|客户经理)/],
-  ['职能', /(行政|人事|HR|财务|会计|法务|采购|供应链|IT|信息)/],
+  ['销售市场', /(销售|市场|商务|渠道|客户经理|外贸|文案|策划|品牌|推广|运营|新媒体|电商)/],
+  ['职能', /(行政|人事|人力资源|HR|招聘|绩效|薪酬|财务|会计|法务|采购|供应链|IT|信息)/],
 ];
 
 function guessJobFamily(title, requirement = '') {
-  const text = `${title || ''} ${String(requirement).slice(0, 400)}`;
+  // 「XX公司2027届校园招聘」这类事件标题里的"招聘"不是岗位职能，先剥掉事件词再判
+  const eventless = String(title || '').replace(/校园招聘|社会招聘|春季招聘|秋季招聘|春招|秋招|校招|招聘会|招聘公告|招聘信息|招聘简章/g, ' ').trim();
+
+  const text = `${eventless} ${String(requirement).slice(0, 400)}`;
   // 先看标题：标题里的岗位名比正文可靠
   for (const [family, re] of FAMILY_RULES) {
-    if (title && re.test(title)) return family;
+    if (eventless && re.test(eventless)) return family;
   }
   for (const [family, re] of FAMILY_RULES) {
     if (re.test(text)) return family;
