@@ -24,24 +24,34 @@ function enabledSources(cfg) {
 async function crawlAll(cfg, ctx) {
   const log = ctx.log || (() => {});
   const sources = enabledSources(cfg).filter((s) => !ctx.only || ctx.only.includes(s.id));
+  // 源之间并发（每个源内部仍按页顺序 + 页间 delay）：多接几个源时总耗时不会被串行拖长。
+  // 结果按 sources 原顺序收集，保证日志/统计稳定可复现。
+  const results = await Promise.all(
+    sources.map(async (source) => {
+      const adapter = ADAPTERS[source.kind];
+      if (!adapter) {
+        log(`[${source.id}] 未知 kind=${source.kind}，跳过`);
+        return null;
+      }
+      const started = Date.now();
+      try {
+        const res = await adapter.crawlSource(source, ctx);
+        const ms = Date.now() - started;
+        log(`[${source.id}] 抓到 ${res.items.length} 条（${(ms / 1000).toFixed(1)}s）`);
+        return { items: res.items, stat: { ...res.stats, ms, label: source.label || source.id } };
+      } catch (err) {
+        const ms = Date.now() - started;
+        log(`[${source.id}] 抓取失败：${err.message}`);
+        return { items: [], stat: { source: source.id, error: err.message, ms, label: source.label || source.id } };
+      }
+    })
+  );
   const items = [];
   const stats = [];
-  for (const source of sources) {
-    const adapter = ADAPTERS[source.kind];
-    if (!adapter) {
-      log(`[${source.id}] 未知 kind=${source.kind}，跳过`);
-      continue;
-    }
-    const started = Date.now();
-    try {
-      const res = await adapter.crawlSource(source, ctx);
-      items.push(...res.items);
-      stats.push({ ...res.stats, ms: Date.now() - started, label: source.label || source.id });
-      log(`[${source.id}] 抓到 ${res.items.length} 条（${((Date.now() - started) / 1000).toFixed(1)}s）`);
-    } catch (err) {
-      stats.push({ source: source.id, error: err.message, ms: Date.now() - started, label: source.label || source.id });
-      log(`[${source.id}] 抓取失败：${err.message}`);
-    }
+  for (const r of results) {
+    if (!r) continue;
+    items.push(...r.items);
+    stats.push(r.stat);
   }
   return { items, stats };
 }

@@ -41,8 +41,9 @@ data/
   raw/YYYY-MM.jsonl      原始抓取池（只追加，可回放）
   runs/YYYY-MM-DD.json   每次运行的漏斗与失败原因
   reports/weekly-*.md    周报存档
-test/                    68 项单元/结构测试（node --test）
+test/                    73 项单元/结构测试（node --test）
 sources.yml              数据源清单（enabled 开关）
+portals.yml              旧版 155 个渠道的清单（候选池，不参与抓取；用于逐步补适配器）
 search-config.yml        城市、岗位族、经验阈值、相关度词表
 profile_model.yml        候选人画像、六维权重、评分锚点、阈值
 scripts/import-legacy.js 旧版 Excel → jobs.jsonl 的一次性迁移脚本
@@ -148,7 +149,9 @@ sources:
 
 ## 已知限制（有意为之，不是 bug）
 
-- **只接入实测可用的源**：目前是西安交大/大连理工就业网（企业校招公告）+ 心脉医疗社招列表。猎聘/BOSS/智联/jobui 均为 JS 渲染或验证码，纯 fetch 抓不到；高校公告详情页也是模板壳，只能当深链给浏览器打开。
+- **只接入实测可用的源**：目前 8 所高校就业网（西安交大、大连理工、国科大、北大、北理、北师、同济、武大，共约 3400 条公告/天）+ 心脉医疗社招列表。
+  猎聘/BOSS/智联/jobui 均为 JS 渲染或验证码，纯 fetch 抓不到；高校公告详情页也是模板壳，只能当深链给浏览器打开。
+  `portals.yml` 保留了旧版 155 个渠道的完整清单（65 查询 / 31 高校 / 17 公众号 / 42 企业），作为后续逐个补适配器的候选池。
 - **企业静态列表大多没有岗位深链**（心脉的 `<a href="javascript:;">`），这类记录 `url_quality=company_page`，网页/表格里会标注，仍需点开人工确认。
 - **源级失败不阻塞流水线**：GitHub 海外 runner 访问国内高校站点经常超时（实测 `dlut_campus` 在 Actions 里 fetch failed、`xjtu_campus` 正常）；
   只要还有一个源抓到数据就继续跑，失败源写进 `data/runs/`；要严格模式用 `npm run crawl -- --strict`（任一源失败即退出非 0）。

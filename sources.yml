@@ -26,6 +26,84 @@ sources:
     max_pages: 50
     page_delay_ms: 200
 
+  # ---- 同模板高校（2026-10-29 实测：/f/ajaxHome/getToken 返回 token，可复用 univ-announcement）----
+  - id: ucas_campus
+    label: 中国科学院大学就业网 · 招聘公告
+    kind: univ-announcement
+    enabled: true
+    base_url: https://job.ucas.ac.cn
+    position_type: "1"
+    page_size: 100
+    daily_pages: 3
+    max_pages: 20
+    page_delay_ms: 200
+
+  - id: pku_campus
+    label: 北京大学就业指导中心 · 招聘公告
+    kind: univ-announcement
+    enabled: true
+    base_url: https://scc.pku.edu.cn
+    position_type: "1"
+    page_size: 100
+    daily_pages: 3
+    max_pages: 20
+    page_delay_ms: 200
+
+  - id: bit_campus
+    label: 北京理工大学就业网 · 招聘公告
+    kind: univ-announcement
+    enabled: true
+    base_url: https://job.bit.edu.cn
+    position_type: "1"
+    page_size: 100
+    daily_pages: 3
+    max_pages: 20
+    page_delay_ms: 200
+
+  - id: bnu_campus
+    label: 北京师范大学就业资讯网 · 招聘公告
+    kind: univ-announcement
+    enabled: true
+    base_url: https://career.bnu.edu.cn
+    position_type: "1"
+    page_size: 100
+    daily_pages: 3
+    max_pages: 20
+    page_delay_ms: 200
+
+  - id: tongji_campus
+    label: 同济大学就业指导中心 · 招聘公告
+    kind: univ-announcement
+    enabled: true
+    base_url: https://tj91.tongji.edu.cn
+    position_type: "1"
+    page_size: 100
+    daily_pages: 3
+    max_pages: 20
+    page_delay_ms: 200
+
+  - id: whu_campus
+    label: 武汉大学就业指导中心 · 招聘公告
+    kind: univ-announcement
+    enabled: true
+    base_url: https://xsjy.whu.edu.cn
+    position_type: "1"
+    page_size: 100
+    daily_pages: 3
+    max_pages: 20
+    page_delay_ms: 200
+
+  - id: scu_campus
+    label: 四川大学就业指导中心 · 招聘公告（token 接口返回 HTML，非 xjtu 模板，暂不启用）
+    kind: univ-announcement
+    enabled: false
+    base_url: https://jy.scu.edu.cn
+    position_type: "1"
+    page_size: 100
+    daily_pages: 3
+    max_pages: 20
+    page_delay_ms: 200
+
   # ---- 企业官网（HTML 静态列表）----
   - id: endovastec_social
     label: 心脉医疗 · 社会招聘

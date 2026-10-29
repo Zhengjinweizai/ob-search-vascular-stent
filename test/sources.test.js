@@ -57,6 +57,26 @@ test('univ-announcement：翻页、字段映射、绝对 URL', async () => {
   assert.equal(http.calls.getJson, 1);
 });
 
+test('univ-announcement：没有 corporationName 时回退 corporationinfo.name（同济模板）', async () => {
+  const http = makeStubHttp({
+    pages: [[
+      {
+        title: '上海某医疗科技有限公司2027届校园招聘',
+        corporationinfo: { name: '上海某医疗科技有限公司' },
+        url: '/f/recruitmentinfo/show?recruitmentId=t1',
+        education: '硕士',
+        startTime: '2026-10-28 09:00:00',
+      },
+    ]],
+  });
+  const { items } = await univ.crawlSource(
+    { id: 'stub', base_url: 'https://tj.example.edu.cn', page_size: 5, daily_pages: 2, max_pages: 2 },
+    { http },
+  );
+  assert.equal(items.length, 1);
+  assert.equal(items[0].company, '上海某医疗科技有限公司');
+});
+
 test('univ-announcement：token 失败时抛错', async () => {
   const http = makeStubHttp({ token: null });
   await assert.rejects(

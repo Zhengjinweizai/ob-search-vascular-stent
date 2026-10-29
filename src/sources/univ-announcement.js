@@ -79,7 +79,8 @@ async function crawlSource(source, ctx) {
     if (!Array.isArray(list) || list.length === 0) break;
 
     for (const item of list) {
-      const company = String(item.corporationName || '').trim();
+      // 同模板站点字段不完全一致：xjtu 用 corporationName，tongji 只有 corporationinfo.name
+      const company = String(item.corporationName || (item.corporationinfo && item.corporationinfo.name) || '').trim();
       const title = String(item.title || '').trim();
       if (!company || !title) continue;
       const detailUrl = item.url ? new URL(item.url, base + '/').toString() : '';
