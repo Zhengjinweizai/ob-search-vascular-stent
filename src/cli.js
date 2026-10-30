@@ -443,7 +443,7 @@ async function cmdPrune(args) {
     else if (family === '销售市场' || family === '临床医学' || family === '职能') reason = 'family';
     else if (job.kind === 'announcement') {
       if (!(isCore(job) || hasDev(job))) reason = 'not_relevant';
-    } else if (!(isCore(job) || hasDir(job) || hasDev(job))) reason = 'direction_mismatch';
+    } else if (!hasDir(job) && !(isCore(job) && hasDev(job))) reason = 'direction_mismatch';
     if (reason) dropped.push({ reason, job });
     else kept.push(job);
   }
