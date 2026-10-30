@@ -426,6 +426,9 @@ async function cmdPrune(args) {
   const isCore = (j) => CORE.some((c) => (j.company || '').includes(c));
   const hasDir = (j) => (rel.direction_keywords || []).some((k) => `${j.title || ''} ${j.requirement || ''}`.includes(k));
   const hasDev = (j) => DEV.some((k) => text(j).includes(k));
+  // 核心企业也要看岗位名：研发/材料/结构/工艺/质量/注册/设计/仿真这类才算相关（排除"机械工程师"这种通用工程岗）
+  const DOMAIN_TITLE = /研发|研究|材料|结构|工艺|质量|注册|设计|仿真|力学|涂层|支架|导管|球囊|介入/;
+  const hasDomainTitle = (j) => DOMAIN_TITLE.test(j.title || '');
 
   const jobs = store.readJobs(root);
   const kept = [];
@@ -443,7 +446,7 @@ async function cmdPrune(args) {
     else if (family === '销售市场' || family === '临床医学' || family === '职能') reason = 'family';
     else if (job.kind === 'announcement') {
       if (!(isCore(job) || hasDev(job))) reason = 'not_relevant';
-    } else if (!hasDir(job) && !(isCore(job) && hasDev(job))) reason = 'direction_mismatch';
+    } else if (!hasDir(job) && !(isCore(job) && hasDomainTitle(job))) reason = 'direction_mismatch';
     if (reason) dropped.push({ reason, job });
     else kept.push(job);
   }
