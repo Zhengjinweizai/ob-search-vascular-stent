@@ -107,7 +107,7 @@ scoring:
   evidence_required_over: 60   # 单维超过该分数必须给出原文证据
 
 thresholds:
-  strong: 88        # 强推门槛（排序用，不是是否推荐的唯一标准）
+  strong: 85        # 强推门槛（排序用，不是是否推荐的唯一标准）
   consider: 70      # 值得考虑
   daily_cap: 8      # 每天最多推荐条数（校招优先、截止日近的优先）
 

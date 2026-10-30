@@ -65,6 +65,13 @@ function gate(job, cfg, opts = {}) {
     needReview = true;
     reasons.push('relevance_uncertain');
   }
+  // 5.5 岗位名直接排除（软件/算法/试剂/检验等，公司是医疗器械也不看）
+  if (job.role_excluded) return { action: 'skip', reasons: ['role_excluded'] };
+  // 5.6 专业方向：标题/要求里没有支架/介入/导管/生物材料等方向词 → 只进复核，不推荐
+  if (!job.direction_match) {
+    needReview = true;
+    reasons.push('direction_uncertain');
+  }
   // 6. 岗位族白名单
   if (!include.has(job.job_family)) {
     if (include.size === 0) {

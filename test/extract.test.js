@@ -62,3 +62,38 @@ test('同一 URL 的 id 稳定', () => {
   const b = extractCandidate({ ...annRaw, fetched_at: new Date().toISOString() }, cfg);
   assert.equal(a.id, b.id);
 });
+
+test('专业方向匹配：标题/要求命中支架/导管/介入等才算方向相关', () => {
+  const stent = extractCandidate(
+    {
+      source: 'beisen',
+      kind: 'position',
+      company: '北芯生命',
+      title: '导管研发工程师-复杂介入',
+      url: 'https://insight-med.zhiye.com/social/detail/123',
+      city: '深圳',
+      requirement: '负责血管介入导管的结构设计与验证，熟悉球囊、导丝。',
+    },
+    cfg,
+    { now: new Date('2026-10-28T00:00:00+08:00') },
+  );
+  assert.equal(stent.direction_match, true);
+  assert.ok(stent.direction_hits.includes('导管'));
+  assert.equal(stent.role_excluded, false);
+
+  const it = extractCandidate(
+    {
+      source: 'beisen',
+      kind: 'position',
+      company: '迈瑞医疗',
+      title: '软件开发资深工程师（麻醉呼吸）',
+      url: 'https://mindray.zhiye.com/social/detail/456',
+      city: '深圳',
+      requirement: '负责麻醉机软件模块开发，C++/QT。',
+    },
+    cfg,
+    { now: new Date('2026-10-28T00:00:00+08:00') },
+  );
+  assert.equal(it.role_excluded, true);
+  assert.equal(it.direction_match, false);
+});

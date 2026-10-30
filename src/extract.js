@@ -65,6 +65,11 @@ function extractCandidate(raw, cfg, opts = {}) {
     fetched_at: raw.fetched_at || now.toISOString(),
     // 已验证的企业官网/ATS 源直接标记医疗器械行业，避免"先健科技"这类不含"医疗"字样的公司被误杀
     medical_relevant: Boolean(raw.industry_hint) || hitsAny(text, relevance.keywords),
+    // 专业方向匹配：标题/要求里是否出现支架、介入、导管等方向词
+    direction_hits: (relevance.direction_keywords || []).filter((k) => text.includes(k)),
+    direction_match: (relevance.direction_keywords || []).some((k) => text.includes(k)),
+    // 明显无关的岗位名（软件/算法/试剂/试剂检验等），即使公司是医疗器械也直接丢
+    role_excluded: (relevance.role_exclude || []).some((k) => title.includes(k)),
     org_excluded: hitsAny(company, relevance.org_exclude),
     major_relevant: hitsAny([raw.major, title, raw.requirement].filter(Boolean).join(' '), relevance.majors),
   };

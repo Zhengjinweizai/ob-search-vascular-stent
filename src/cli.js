@@ -1,4 +1,5 @@
 'use strict';
+const path = require('node:path');
 /**
  * 方案 B 命令行入口。
  *
@@ -8,6 +9,7 @@
  *   node src/cli.js score [--recheck] [--limit=N]
  *   node src/cli.js publish [--no-notify] [--dry-run]
  *   node src/cli.js notify [--dry-run]
+ *   node src/cli.js prune [--dry-run]   清理主库里与专业方向无关的历史岗位
  *   node src/cli.js weekly [--push]
  *   node src/cli.js run [--full]
  *   node src/cli.js check
@@ -189,10 +191,25 @@ async function cmdProcess(args) {
   store.writeJsonl(store.defaultPaths(root).review, review);
 
   // 通过硬规则的岗位写入主库（评分在下一步；upsert 会保留旧的 first_seen/评分）
-  const merged = store.upsertJobs(
-    root,
-    keep.map((job) => ({ ...job, last_seen: today, status: job.status || 'active', entered_at: today })),
-  );
+  // 另外：本次被判为 skip/review、但主库里还是 keep 的旧记录，要同步降级（否则旧岗位会一直留在推荐里）
+  const mainDb = store.readJobs(root);
+  const keepIds = new Set(keep.map((j) => j.id));
+  const demoted = mainDb
+    .filter((j) => !keepIds.has(j.id) && j.gate?.action === 'keep')
+    .map((j) => {
+      const fresh = byId.get(j.id);
+      return {
+        ...(fresh || j),
+        id: j.id,
+        gate: fresh?.gate || { action: 'skip', reasons: ['not_in_current_run'] },
+        last_seen: j.last_seen,
+      };
+    });
+  const merged = store.upsertJobs(root, [
+    ...keep.map((job) => ({ ...job, last_seen: today, status: job.status || 'active', entered_at: today })),
+    ...demoted,
+  ]);
+  if (demoted.length) log(`   主库降级 ${demoted.length} 条（本次不再通过硬规则）`);
   const runLog = {
     funnel: {
       ...funnel,
@@ -380,6 +397,73 @@ function cmdCheck() {
   return 0;
 }
 
+/**
+ * 清理主库：把与"血管介入/支架/生物材料"方向无关的岗位从 data/jobs.jsonl 里删掉。
+ * 规则（与 filter.js 的专业方向口径一致，但更严格，用于历史数据清理）：
+ *   1) 岗位名命中 role_exclude（软件/算法/试剂/HR/财务…）→ 删
+ *   2) 公司命中 org_exclude（医院/银行/人力…）→ 删
+ *   3) 岗位族不在白名单 → 删
+ *   4) 公告：公司是核心医疗器械企业、或文本含器械/介入类词才留
+ *   5) 岗位：公司是核心心血管/介入企业，或标题/要求命中方向词才留
+ */
+async function cmdPrune(args) {
+  const log = (msg) => console.log(msg);
+  const root = repoRoot();
+  const cfg = loadConfig(root);
+  const rel = cfg.search?.relevance || {};
+  const famInclude = cfg.search?.job_families?.include || [];
+  const CORE = [
+    '心脉', '微创', '乐普', '先健', '赛诺', '北芯', '启明', '沛嘉', '惠泰', '归创',
+    '垠艺', '美中双和', '康誉', '赛禾', '百心安', '通桥', '健适', '蓝帆', '泰尔茂',
+    '波士顿科学', '美敦力', '雅培', '朝日英科', '波科', '德诺', '华安', '益心', '博迈', '元心', '心通',
+  ];
+  const DEV = [
+    '医疗器械', '医用', '介入', '支架', '导管', '球囊', '植入', '耗材', '心血管',
+    '血管', '可降解', '生物材料', '生物相容', '镍钛', '药物洗脱', '密网', '血流导向', '冠脉', '外周',
+  ];
+  const { guessJobFamily } = require('./normalize');
+  const text = (j) => `${j.company || ''} ${j.title || ''} ${j.requirement || ''}`;
+  const isCore = (j) => CORE.some((c) => (j.company || '').includes(c));
+  const hasDir = (j) => (rel.direction_keywords || []).some((k) => `${j.title || ''} ${j.requirement || ''}`.includes(k));
+  const hasDev = (j) => DEV.some((k) => text(j).includes(k));
+
+  const jobs = store.readJobs(root);
+  const kept = [];
+  const dropped = [];
+  for (const job of jobs) {
+    const title = job.title || '';
+    let family = guessJobFamily(title, '');
+    // "其他"但标题是研发/科研/技术岗的，按研发处理（例如"心脑血管植入器械与材料方向 专职科研人员"）
+    if (family === '其他' && /研发|科研|研究|技术/.test(title)) family = '研发';
+    const textAll = `${title} ${job.requirement || ''}`;
+    const isPostdoc = ['博士后', '博后', '博士后研究员'].some((k) => textAll.includes(k));
+    let reason = null;
+    if ((rel.role_exclude || []).some((k) => title.includes(k))) reason = 'role_excluded';
+    else if (isPostdoc) reason = 'postdoc';
+    else if (family === '销售市场' || family === '临床医学' || family === '职能') reason = 'family';
+    else if (job.kind === 'announcement') {
+      if (!(isCore(job) || hasDev(job))) reason = 'not_relevant';
+    } else if (!(isCore(job) || hasDir(job) || hasDev(job))) reason = 'direction_mismatch';
+    if (reason) dropped.push({ reason, job });
+    else kept.push(job);
+  }
+
+  const byReason = dropped.reduce((acc, d) => {
+    acc[d.reason] = (acc[d.reason] || 0) + 1;
+    return acc;
+  }, {});
+  log(`== 主库 ${jobs.length} 条：保留 ${kept.length}，删除 ${dropped.length} ${JSON.stringify(byReason)}`);
+  if (args.dryRun) {
+    for (const d of dropped.slice(0, 30)) log(`   - [${d.reason}] ${d.job.company || ''} | ${d.job.title || ''}`);
+    log('   （--dry-run：没有写盘）');
+    return 0;
+  }
+  const target = store.defaultPaths(root).jobs;
+  store.writeJsonl(target, kept);
+  log(`== 已重写 ${path.relative(root, target)}（${kept.length} 条）`);
+  return 0;
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   const cmd = args._[0];
@@ -390,8 +474,9 @@ async function main() {
   if (cmd === 'notify') return cmdNotify(args);
   if (cmd === 'weekly') return cmdWeekly(args);
   if (cmd === 'run') return cmdRun(args);
+  if (cmd === 'prune') return cmdPrune(args);
   if (cmd === 'check') return cmdCheck();
-  console.log('用法：node src/cli.js <crawl|process|score|publish|notify|weekly|run|check> [选项]');
+  console.log('用法：node src/cli.js <crawl|process|score|publish|notify|weekly|prune|run|check> [选项]');
   return 2;
 }
 

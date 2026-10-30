@@ -124,3 +124,52 @@ test('parseExperience 常见写法', () => {
   assert.equal(parseExperience('不限经验'), null);
   assert.equal(parseExperience(''), null);
 });
+
+test('岗位名排除：软件/算法/试剂/HR 直接丢，机械类靠方向词判定', () => {
+  const sw = extractCandidate(
+    {
+      source: 'beisen',
+      kind: 'position',
+      company: '迈瑞医疗',
+      title: '软件开发资深工程师（麻醉呼吸）',
+      url: 'https://mindray.zhiye.com/social/detail/1',
+      city: '深圳',
+      requirement: '负责麻醉机软件模块开发，C++/QT。',
+    },
+    cfg,
+    { now: new Date('2026-10-28T00:00:00+08:00') },
+  );
+  assert.deepEqual(gate(sw, cfg, { today: TODAY }), { action: 'skip', reasons: ['role_excluded'] });
+
+  const generic = extractCandidate(
+    {
+      source: 'beisen',
+      kind: 'position',
+      company: '某医疗器械公司',
+      title: '研发工程师（机械结构）',
+      url: 'https://example.com/job/2',
+      city: '上海',
+      requirement: '负责设备结构设计，熟悉 SolidWorks 与有限元。',
+    },
+    cfg,
+    { now: new Date('2026-10-28T00:00:00+08:00') },
+  );
+  const g = gate(generic, cfg, { today: TODAY });
+  assert.equal(g.action, 'review');
+  assert.ok(g.reasons.includes('direction_uncertain'));
+
+  const hit = extractCandidate(
+    {
+      source: 'beisen',
+      kind: 'position',
+      company: '北芯生命',
+      title: '器械研发工程师-机械和结构设计方向',
+      url: 'https://insight-med.zhiye.com/social/detail/3',
+      city: '深圳',
+      requirement: '负责导管、球囊类血管介入器械的结构设计与力学仿真。',
+    },
+    cfg,
+    { now: new Date('2026-10-28T00:00:00+08:00') },
+  );
+  assert.equal(gate(hit, cfg, { today: TODAY }).action, 'keep');
+});
