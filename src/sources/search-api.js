@@ -179,9 +179,9 @@ async function fetchDetail(http, url) {
   return { title, text: detailText };
 }
 
-async function crawlSource(source, { http, log, full } = {}) {
+async function crawlSource(source, { http, log, full, env = process.env } = {}) {
   const today = require('../date').todayStr();
-  const { provider, apiKey } = resolveProvider(source);
+  const { provider, apiKey } = resolveProvider(source, env);
   if (!apiKey) {
     log?.(`[${source.id}] 跳过：未配置 ${provider.envKey} / SEARCH_API_KEY`);
     return { items: [], stats: { source: source.id, skipped: 'no_api_key', provider: provider.name } };

@@ -90,6 +90,7 @@ test('mapResult：URL 规范化、摘要进 requirement、标记 snippet_only', 
 });
 
 test('crawlSource：无 key 时跳过且不报错', async () => {
+  // 显式传 env：CI 里 workflow 会注入真实 BOCHA_API_KEY，不能依赖“环境里没有 key”
   const { items, stats } = await crawlSource(SOURCE, { http: {}, log: () => {}, full: false, env: {} });
   assert.strictEqual(items.length, 0);
   assert.strictEqual(stats.skipped, 'no_api_key');
@@ -106,10 +107,8 @@ test('crawlSource：解析 provider 返回、按 URL 去重', async () => {
       throw new Error('should not be called');
     },
   };
-  const prev = process.env.BOCHA_API_KEY;
-  process.env.BOCHA_API_KEY = 'test-key';
-  try {
-    const { items, stats } = await crawlSource(SOURCE, { http, log: () => {}, full: false });
+  {
+    const { items, stats } = await crawlSource(SOURCE, { http, log: () => {}, full: false, env: { BOCHA_API_KEY: 'test-key' } });
     assert.strictEqual(items.length, 2);
     assert.strictEqual(stats.results, 2);
     assert.strictEqual(stats.provider, 'bocha');
@@ -118,9 +117,6 @@ test('crawlSource：解析 provider 返回、按 URL 去重', async () => {
     assert.strictEqual(calls[0].options.headers.authorization, 'Bearer test-key');
     assert.strictEqual(items[0].url, 'https://www.liepin.com/job/1981333257.shtml');
     assert.strictEqual(items[0].company, '康誉医疗');
-  assert.strictEqual(items[0].posted_at, '2026-10-20');
-  } finally {
-    if (prev === undefined) delete process.env.BOCHA_API_KEY;
-    else process.env.BOCHA_API_KEY = prev;
+    assert.strictEqual(items[0].posted_at, '2026-10-20');
   }
 });
