@@ -58,7 +58,7 @@ jobs:
         run: node src/cli.js crawl
 
       - name: 清洗、去重与硬规则过滤
-        timeout-minutes: 10
+        timeout-minutes: 15
         run: node src/cli.js process
 
       # AI 只读已经过过滤的候选页，输出六维分 + 原文证据，总分由脚本重算

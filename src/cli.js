@@ -117,37 +117,11 @@ async function cmdProcess(args) {
   }
   log(`   抽取 ${funnel.extracted}，同批重复 ${funnel.dupInRun}，唯一 ${byId.size}`);
 
-  // 2) URL 校验（只校验要保留的岗位深链；公告链接来自交易所接口，直接信任 200）
-  const validator = new UrlValidator({ http });
-  if (!args.noValidate) {
-    const targets = [...byId.values()].filter((j) => j.kind === 'position' && !j.is_search_url);
-    let done = 0;
-    for (const job of targets) {
-      const res = await validator.validate(job.url);
-      job.url_ok = res.ok;
-      job.url_status = res.status;
-      job.url_quality = res.quality;
-      done += 1;
-      if (done % 20 === 0) log(`   校验 URL ${done}/${targets.length}`);
-    }
-    // 公告：接口返回的详情页 URL 记为 deep_link（打开由用户浏览器完成）
-    for (const job of byId.values()) {
-      if (job.kind === 'announcement') {
-        job.url_ok = true;
-        job.url_quality = 'deep_link';
-      }
-    }
-  }
-
-  // 3) 硬规则
+  // 2) 硬规则（纯本地判断，先跑，快）
   const keep = [];
   const review = [];
   const skipReasons = {};
   for (const job of byId.values()) {
-    if (!args.noValidate && job.kind === 'position' && !job.url_ok) {
-      skipReasons.url_unreachable = (skipReasons.url_unreachable || 0) + 1;
-      continue;
-    }
     const g = gate(job, cfg);
     job.gate = { action: g.action, reasons: g.reasons };
     if (g.action === 'keep') keep.push(job);
@@ -156,6 +130,58 @@ async function cmdProcess(args) {
       for (const r of g.reasons) skipReasons[r] = (skipReasons[r] || 0) + 1;
     }
   }
+
+  // 3) URL 存活校验（只校验“活下来的”岗位深链；公告与平台链接不走 HTTP 校验）
+  //    - 公告：链接来自高校/企业接口，本身有效
+  //    - 平台链接（BOSS/猎聘/智联/51job）：反爬必然失败，不能因此丢岗位；标 platform_link 交给用户点击
+  let validatorStats = {};
+  if (!args.noValidate) {
+    const PLATFORM_HOSTS = /(^|\.)(zhipin|liepin|zhaopin|51job|lagou|maimai|nowcoder)\.(com|cn)$/i;
+    const fastHttp = new HttpClient({ timeoutMs: 6000, retries: 0, concurrency: 8 });
+    const validator = new UrlValidator({ http: fastHttp });
+    const targets = [...keep, ...review].filter((job) => {
+      if (job.kind === 'announcement') return false;
+      if (job.is_search_url) return false;
+      let host = '';
+      try {
+        host = new URL(job.url).hostname;
+      } catch {
+        return false;
+      }
+      if (PLATFORM_HOSTS.test(host)) {
+        job.url_ok = null;
+        job.url_quality = 'platform_link';
+        return false;
+      }
+      return true;
+    });
+    log(`   校验 URL ${targets.length} 条（keep ${keep.length} / review ${review.length} 中的可校验深链）`);
+    await Promise.all(
+      targets.map(async (job) => {
+        const res = await validator.validate(job.url);
+        job.url_ok = res.ok;
+        job.url_status = res.status;
+        job.url_quality = res.quality;
+      })
+    );
+    for (const job of byId.values()) {
+      if (job.kind === 'announcement') {
+        job.url_ok = true;
+        job.url_quality = 'deep_link';
+      }
+    }
+    validatorStats = validator.stats;
+    // 校验失败的岗位从 keep/review 中剔除
+    for (const list of [keep, review]) {
+      for (let k = list.length - 1; k >= 0; k -= 1) {
+        if (list[k].kind === 'position' && list[k].url_ok === false) {
+          skipReasons.url_unreachable = (skipReasons.url_unreachable || 0) + 1;
+          list.splice(k, 1);
+        }
+      }
+    }
+  }
+
   log(`   保留 ${keep.length}，人工复核 ${review.length}，丢弃 ${Object.values(skipReasons).reduce((a, b) => a + b, 0)}`);
   log(`   丢弃原因：${JSON.stringify(skipReasons)}`);
 
@@ -173,7 +199,7 @@ async function cmdProcess(args) {
       keep: keep.length,
       review: review.length,
       skipReasons,
-      urlStats: validator.stats,
+      urlStats: validatorStats,
     },
     byKind: keep.reduce((acc, j) => {
       acc[j.kind] = (acc[j.kind] || 0) + 1;
