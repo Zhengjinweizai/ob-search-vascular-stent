@@ -114,7 +114,7 @@ function buildNote(job, profile) {
   const parts = [`智能匹配${job.total}分【${job.job_family || '其他'}】`, levelOf(job, profile)];
   const g = gateText(job);
   if (g) parts.push(g);
-  if (isLegacyRow(job)) parts.push('历史数据（旧评分）');
+  if (isLegacyRow(job) && !hasFreshScore(job)) parts.push('历史数据（旧评分）');
   return parts.join('｜');
 }
 
@@ -123,10 +123,10 @@ function compareJobs(a, b) {
   const ra = ACTION_RANK[a.gate?.action] ?? 3;
   const rb = ACTION_RANK[b.gate?.action] ?? 3;
   if (ra !== rb) return ra - rb;
-  // 旧版 AI 打的分数（历史导入）不可与新评分比较：同组内新数据排前面
-  const la = isLegacyRow(a) ? 1 : 0;
-  const lb = isLegacyRow(b) ? 1 : 0;
-  if (la !== lb) return la - lb;
+  // 组内全量重评后分数同口径，直接用分数排序；未重评的历史行只可能出现在"已排除"组
+  const fa = hasFreshScore(a) ? 0 : 1;
+  const fb = hasFreshScore(b) ? 0 : 1;
+  if (fa !== fb) return fa - fb;
   const ta = typeof a.total === 'number' ? a.total : -1;
   const tb = typeof b.total === 'number' ? b.total : -1;
   if (tb !== ta) return tb - ta;
@@ -148,13 +148,18 @@ function isLegacy(job) {
   return job.source === 'legacy_xlsx' || Boolean(job.legacy);
 }
 
+// 历史导入行在「全量重评」后也会带上六维证据：有证据 = 已经是新口径分数
+function hasFreshScore(job) {
+  return Boolean(job.evidence && Object.keys(job.evidence).length);
+}
+
 function recommendJobs(jobs, profile, today) {
   const th = profile?.thresholds || { strong: 88 };
   return jobs
     .filter((j) => {
       if (j.gate?.action !== 'keep') return false;
-      // 历史导入行：分数来自旧流程（口径与现在不同），只做归档展示，不重新推荐
-      if (isLegacy(j)) return false;
+      // 历史导入行若还没按新口径重评（无证据），只做归档展示，不重新推荐
+      if (isLegacy(j) && !hasFreshScore(j)) return false;
       if (typeof j.total !== 'number' || j.total < th.strong) return false;
       if (j.status === 'closed') return false;
       if (j.is_search_url) return false;
