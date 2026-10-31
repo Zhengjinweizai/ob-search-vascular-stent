@@ -237,6 +237,7 @@ async function cmdScore(args) {
   const jobs = store.readJobs(root);
   // 默认只评"通过硬规则且还没评分"的岗位；--recheck 重评全部 keep 岗位
   const targets = jobs.filter((j) => {
+    if (args.all) return j.gate?.action === 'keep' || j.gate?.action === 'review';
     if (j.gate?.action !== 'keep') return false;
     if (args.recheck) return true;
     return typeof j.total !== 'number';

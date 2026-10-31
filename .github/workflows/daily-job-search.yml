@@ -4,6 +4,13 @@ on:
   schedule:
     - cron: '0 0 * * *'   # 北京时间 08:00（GitHub 调度通常延迟 1–6 小时，实际约 09:00–14:00）
   workflow_dispatch:       # 支持手动触发
+    inputs:
+      task:
+        description: 'daily=正常抓取；rescore=只重评全部可投岗位（不抓取）'
+        required: false
+        default: daily
+        type: choice
+        options: [daily, rescore]
 
 # 统一时区：所有 date 命令、脚本里的 new Date() 都按北京时间
 env:
@@ -54,17 +61,19 @@ jobs:
 
       # 抓取交给脚本（不再依赖 AI 有没有搜索工具）；每个源的成败都写进 data/runs
       - name: 抓取招聘源（高校就业网 / 企业官网）
+        if: ${{ github.event.inputs.task != 'rescore' }}
         timeout-minutes: 20
         run: node src/cli.js crawl
 
       - name: 清洗、去重与硬规则过滤
+        if: ${{ github.event.inputs.task != 'rescore' }}
         timeout-minutes: 15
         run: node src/cli.js process
 
       # AI 只读已经过过滤的候选页，输出六维分 + 原文证据，总分由脚本重算
       - name: AI 评分（DeepSeek，六维 + 证据）
-        timeout-minutes: 15
-        run: node src/cli.js score
+        timeout-minutes: 20
+        run: node src/cli.js score ${{ github.event.inputs.task == 'rescore' && '--all' || '' }}
 
       - name: 生成 Excel 与网页日报
         timeout-minutes: 10

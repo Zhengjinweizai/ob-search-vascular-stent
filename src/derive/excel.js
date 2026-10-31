@@ -67,7 +67,66 @@ function dimsText(scores, evidence) {
   return ev ? `${parts.join('/')}｜证据：${ev}` : parts.join('/');
 }
 
+const ACTION_RANK = { keep: 0, review: 1, skip: 2 };
+
+const GATE_REASON_TEXT = {
+  not_relevant: '非医疗器械方向',
+  direction_mismatch: '专业方向不匹配',
+  direction_uncertain: '方向待确认',
+  role_excluded: '岗位类型排除',
+  family: '岗位族不在白名单',
+  postdoc: '博士后岗位',
+  phd_only: '仅招博士',
+  expired: '已过截止日期',
+  city: '城市不在范围',
+  city_unmapped: '地点不在目标城市',
+  city_unknown: '地点未知待确认',
+  experience: '经验要求不符',
+  experience_relax: '经验可放宽待确认',
+  org_excluded: '单位类型排除',
+  url_unreachable: '链接打不开',
+  url_invalid: '链接无效',
+  not_in_current_run: '本次未再出现',
+};
+
+function gateText(job) {
+  const action = job.gate?.action;
+  if (action === 'keep') return '';
+  if (action === 'review') {
+    const reasons = (job.gate?.reasons || []).filter((r) => GATE_REASON_TEXT[r]);
+    const text = reasons.map((r) => GATE_REASON_TEXT[r]).join('、');
+    return text ? `待复核：${text}` : '待复核';
+  }
+  if (action === 'skip') {
+    const reasons = (job.gate?.reasons || []).filter((r) => GATE_REASON_TEXT[r]);
+    const text = reasons.map((r) => GATE_REASON_TEXT[r]).join('、');
+    return text ? `已排除：${text}` : '已排除';
+  }
+  return '';
+}
+
+function isLegacyRow(job) {
+  return job.legacy === true || job.source === 'legacy_xlsx';
+}
+
+function buildNote(job, profile) {
+  if (typeof job.total !== 'number') return '待评分';
+  const parts = [`智能匹配${job.total}分【${job.job_family || '其他'}】`, levelOf(job, profile)];
+  const g = gateText(job);
+  if (g) parts.push(g);
+  if (isLegacyRow(job)) parts.push('历史数据（旧评分）');
+  return parts.join('｜');
+}
+
 function compareJobs(a, b) {
+  // 排序即推荐度：可投 → 待复核 → 已排除；同组内按智能分降序
+  const ra = ACTION_RANK[a.gate?.action] ?? 3;
+  const rb = ACTION_RANK[b.gate?.action] ?? 3;
+  if (ra !== rb) return ra - rb;
+  // 旧版 AI 打的分数（历史导入）不可与新评分比较：同组内新数据排前面
+  const la = isLegacyRow(a) ? 1 : 0;
+  const lb = isLegacyRow(b) ? 1 : 0;
+  if (la !== lb) return la - lb;
   const ta = typeof a.total === 'number' ? a.total : -1;
   const tb = typeof b.total === 'number' ? b.total : -1;
   if (tb !== ta) return tb - ta;
@@ -177,10 +236,7 @@ async function writeExcel(root, opts = {}) {
       location: (job.cities || []).join('、') || job.city_raw || '',
       url: job.url_canonical || job.url || '',
       score10: typeof job.total === 'number' ? Math.round(job.total / 10) : '',
-      note:
-        typeof job.total === 'number'
-          ? `智能匹配${job.total}分【${job.job_family || '其他'}】|${levelOf(job, profile)}|${(job.gate?.reasons || []).join(',') || '通过硬规则'}`
-          : '待评分',
+      note: buildNote(job, profile),
       total: typeof job.total === 'number' ? job.total : '',
       dims: dimsText(job.scores, job.evidence),
       why_apply: job.why_apply || '',
@@ -188,7 +244,7 @@ async function writeExcel(root, opts = {}) {
       job_family: job.job_family || '',
       campus: job.campus ? '是' : '否',
       deadline: job.deadline || '',
-      status: job.status || 'unknown',
+      status: ({ active: '在招', closed: '已关闭', unknown: '未知' })[job.status] || job.status || '未知',
     });
   }
   ws.getColumn('url').eachCell((cell) => {
@@ -222,7 +278,7 @@ async function writeExcel(root, opts = {}) {
       job_family: job.job_family || '',
       campus: job.campus ? '是' : '否',
       deadline: job.deadline || '',
-      status: job.status || 'unknown',
+      status: ({ active: '在招', closed: '已关闭', unknown: '未知' })[job.status] || job.status || '未知',
     });
   }
 

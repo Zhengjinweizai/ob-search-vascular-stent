@@ -42,6 +42,7 @@ function jobCard(job, profile, today) {
   <header>
     <h3><a href="${esc(job.url_canonical || job.url)}" target="_blank" rel="noopener">${esc(job.title || '(无标题)')}</a></h3>
     <div class="meta"><strong>${esc(job.company || '')}</strong>${cities ? ` · ${esc(cities)}` : ''}${job.deadline ? ` · 截止 ${esc(job.deadline)}` : ''}${left ? ` · <em>${esc(left)}</em>` : ''}</div>
+    <div class="actions"><a class="apply" href="${esc(job.url_canonical || job.url)}" target="_blank" rel="noopener">${job.kind === 'announcement' ? '查看公告 →' : '投递链接 →'}</a><span class="url">${esc(job.url_canonical || job.url)}</span></div>
     <div class="tags"><span class="level ${typeof job.total === 'number' && job.total >= (profile?.thresholds?.strong ?? 88) ? 'hot' : ''}">${typeof job.total === 'number' ? `${job.total} · ${level}` : '待评分'}</span>${job.campus ? '<span class="tag">校招</span>' : ''}<span class="tag">${esc(job.job_family || '其他')}</span>${dims}</div>
   </header>
   <details>
@@ -56,6 +57,11 @@ function jobCard(job, profile, today) {
 }
 
 const STYLE = `
+.actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:6px 0 2px}
+.actions .apply{display:inline-block;padding:5px 12px;border-radius:8px;background:var(--accent);color:#fff;text-decoration:none;font-size:13px;font-weight:600}
+.actions .apply:hover{background:#1e40af}
+.actions .url{color:var(--muted);font-size:12px;word-break:break-all}
+
 :root{--bg:#f6f7f9;--card:#fff;--text:#1f2328;--muted:#6b7280;--line:#e5e7eb;--hot:#c2410c;--accent:#1d4ed8}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif}
 header.top{padding:20px 24px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
