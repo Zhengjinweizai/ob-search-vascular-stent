@@ -133,5 +133,59 @@
     "channel": "beisen",
     "note": "candidateId 368631368；submissionId 373295372；验证码 yidun image-pick「鱼」3x3 ✔",
     "next_follow_up": ""
+  },
+  {
+    "date": "2026-11-03",
+    "company": "大博医疗科技股份有限公司",
+    "title": "结构工程师",
+    "status": "已投递",
+    "channel": "moka",
+    "note": "candidateId 826026697；验证码 yidun slider gap_css=144.5 ✔（失败2次后第3次通过；Page.bringToFront 修复后台 tab 节流）",
+    "next_follow_up": ""
+  },
+  {
+    "date": "2026-11-03",
+    "company": "蓝帆医疗",
+    "title": "导管研发工程师（上海，心脑血管事业部）",
+    "status": "已投递",
+    "channel": "company_site",
+    "note": "",
+    "next_follow_up": ""
+  },
+  {
+    "date": "2026-11-03",
+    "company": "上海心玮医疗科技股份有限公司",
+    "title": "工艺工程师（上海临港，2025-01-22 发布）",
+    "status": "已投递",
+    "channel": "company_site",
+    "note": "",
+    "next_follow_up": ""
+  },
+  {
+    "date": "2026-11-03",
+    "company": "北京佰仁医疗科技股份有限公司",
+    "title": "瓣膜测试实验工程师-北京-北京工业大学-生物医学工程硕士-杜能",
+    "status": "sent_email",
+    "channel": "email",
+    "note": "",
+    "next_follow_up": ""
+  },
+  {
+    "date": "2026-11-03",
+    "company": "苏州奥芮济医疗科技有限公司",
+    "title": "研发工程师-苏州常熟-北京工业大学-生物医学工程硕士-杜能",
+    "status": "bounced",
+    "channel": "email",
+    "note": "",
+    "next_follow_up": ""
+  },
+  {
+    "date": "2026-11-03",
+    "company": "苏州奥芮济医疗科技有限公司",
+    "title": "研发工程师-苏州常熟-北京工业大学-生物医学工程硕士-杜能（转人力资源部）",
+    "status": "sent_email",
+    "channel": "email",
+    "note": "",
+    "next_follow_up": ""
   }
 ]
