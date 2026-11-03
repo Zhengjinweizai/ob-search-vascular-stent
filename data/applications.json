@@ -1,11 +1,137 @@
 [
   {
-    "apply_date": "2026-07-29",
-    "company": "微创医疗",
-    "title": "血管支架研发工程师",
+    "date": "2026-11-01",
+    "company": "乐普医疗",
+    "title": "研发工程师+杜能、生物医学工程、北京工业大学",
+    "status": "bounced",
+    "channel": "email",
+    "note": "",
+    "next_follow_up": ""
+  },
+  {
+    "date": "2026-10-31",
+    "company": "博迈医疗",
+    "title": "【27届校招】研发工程师（金属材料方向）",
     "status": "已投递",
-    "channel": "官网",
-    "notes": "通过官网投递，等待初筛结果",
-    "next_follow_up": "2026-08-05"
+    "channel": "moka",
+    "note": "",
+    "next_follow_up": ""
+  },
+  {
+    "date": "2026-10-31",
+    "company": "北芯生命",
+    "title": "器械研发工程师-机械和结构设计方向 jobAdId=e63659b7-5ac5-42c9-8ebb-42981f2361",
+    "status": "已投递",
+    "channel": "beisen",
+    "note": "",
+    "next_follow_up": ""
+  },
+  {
+    "date": "2026-10-31",
+    "company": "元心科技",
+    "title": "研发工程师+杜能、生物医学工程、北京工业大学",
+    "status": "sent",
+    "channel": "email",
+    "note": "",
+    "next_follow_up": ""
+  },
+  {
+    "date": "2026-10-31",
+    "company": "上海微创心通医疗科技",
+    "title": "研发工程师+杜能、生物医学工程、北京工业大学",
+    "status": "sent",
+    "channel": "email",
+    "note": "",
+    "next_follow_up": ""
+  },
+  {
+    "date": "2026-11-01",
+    "company": "博迈医疗",
+    "title": "【27届校招】结构工程师",
+    "status": "已投递",
+    "channel": "moka",
+    "note": "验证码 yidun slider solved in-page (synthetic MouseEvent, closed-loop dx)",
+    "next_follow_up": ""
+  },
+  {
+    "date": "2026-11-01",
+    "company": "开立医疗（深圳开立生物医疗科技股份有限公司）",
+    "title": "机械工程师",
+    "status": "已投递",
+    "channel": "moka",
+    "note": "验证码 yidun slider solved in-page (closed-loop dx, gap 131.9)",
+    "next_follow_up": ""
+  },
+  {
+    "date": "2026-11-01",
+    "company": "苏州恒瑞医疗器械有限公司",
+    "title": "2027届校招·管培生岗位自荐（办公室/项目经理/上市后医学）+ 表达结构研发兴趣",
+    "status": "sent",
+    "channel": "email",
+    "note": "",
+    "next_follow_up": ""
+  },
+  {
+    "date": "2026-11-01",
+    "company": "北京品驰医疗设备股份有限公司",
+    "title": "研发工艺工程师（机械）",
+    "status": "已投递",
+    "channel": "moka-anonymous",
+    "note": "",
+    "next_follow_up": ""
+  },
+  {
+    "date": "2026-11-01",
+    "company": "上海微创心脉医疗科技（集团）股份有限公司",
+    "title": "机械研发工程师-心脉业务",
+    "status": "已投递",
+    "channel": "moka",
+    "note": "candidateId 825309918；验证码 yidun slider solved in-page (closed-loop dx, gap 250.6)",
+    "next_follow_up": ""
+  },
+  {
+    "date": "2026-11-02",
+    "company": "北京品驰医疗设备股份有限公司",
+    "title": "质量工程师（机械）",
+    "status": "已投递",
+    "channel": "moka-anonymous",
+    "note": "candidateId 808423742；验证码 yidun slider gap_css=254.0 ✔",
+    "next_follow_up": ""
+  },
+  {
+    "date": "2026-11-02",
+    "company": "大博医疗科技股份有限公司",
+    "title": "【优先】研发管培生",
+    "status": "已投递",
+    "channel": "moka",
+    "note": "candidateId 826026697；验证码 yidun slider gap_css=137.5 ✔",
+    "next_follow_up": ""
+  },
+  {
+    "date": "2026-11-02",
+    "company": "博迈医疗",
+    "title": "【27届校招】研发质量工程师",
+    "status": "已投递",
+    "channel": "moka",
+    "note": "candidateId 825117194；验证码 yidun slider gap_css=127.7 ✔",
+    "next_follow_up": ""
+  },
+  {
+    "date": "2026-11-02",
+    "company": "上海微创医疗机器人（集团）股份有限公司",
+    "title": "机械工程师-机器人业务",
+    "status": "已投递",
+    "channel": "moka",
+    "note": "candidateId 825309918；验证码 yidun slider gap_css=171.7 ✔",
+    "next_follow_up": ""
+  },
+  {
+    "date": "2026-11-02",
+    "company": "深圳迈瑞生物医疗电子股份有限公司",
+    "title": "RD07 机械开发工程师(J18981)",
+    "status": "已投递",
+    "channel": "beisen",
+    "note": "candidateId 368631368；submissionId 373295372；验证码 yidun image-pick「鱼」3x3 ✔",
+    "next_follow_up": ""
   }
 ]
