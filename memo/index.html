@@ -128,8 +128,46 @@
   }
   body.editing [data-edit]:focus{outline-color:#2e90fa;background:#fff}
   body.editing .cb{opacity:.5}
-  .hint{display:none;background:#101828;color:#fff;font-size:12px;padding:8px 16px;text-align:center}
-  body.editing .hint{display:block}
+
+  /* ---------- 增删控件（只在编辑态出现，不进存档） ---------- */
+  .addrow,.addcard,.delrow,.delcard,.undo{display:none}
+  body.editing .addrow,body.editing .delrow,body.editing .delcard{display:inline-flex}
+  body.editing .addcard{display:flex}
+  body.editing .undo{display:inline-flex}
+  .addrow{
+    width:100%;justify-content:center;gap:4px;margin:0 0 10px;padding:9px 12px;
+    border:1px dashed #cfd4dc;border-radius:10px;background:#fff;color:#667085;
+    font:inherit;font-size:13px;cursor:pointer
+  }
+  .addrow:hover{color:#101828;border-color:#98a2b3;background:#fcfcfd}
+  .addcard{
+    width:100%;justify-content:center;margin:16px 0 0;padding:14px 12px;
+    border:1.5px dashed #b9c0cc;border-radius:var(--radius);background:#fbfcfd;color:#475467;
+    font:inherit;font-size:14px;font-weight:600;cursor:pointer
+  }
+  .addcard:hover{border-color:#2e90fa;color:#175cd3;background:#f5faff}
+  ul.todo li{position:relative}
+  .delrow,.delcard{
+    margin-left:auto;align-items:center;justify-content:center;flex:0 0 auto;
+    border:0;background:transparent;color:#98a2b3;cursor:pointer;font:inherit;
+    line-height:1;padding:2px 6px;border-radius:6px
+  }
+  .delrow{font-size:18px}
+  .delrow:hover{background:#fef3f2;color:var(--red)}
+  .delcard{font-size:12px;align-self:flex-start;margin-top:1px;white-space:nowrap;gap:4px}
+  .delcard:hover{background:#fef3f2;color:var(--red)}
+  .hint{
+    display:none;background:#101828;color:#fff;font-size:12px;padding:8px 16px;
+    text-align:center;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap
+  }
+  body.editing .hint{display:flex}
+  .undo{
+    border:1px solid rgba(255,255,255,.28);background:transparent;color:#fff;
+    font:inherit;font-size:12px;padding:5px 10px;border-radius:8px;cursor:pointer
+  }
+  .undo:hover{background:rgba(255,255,255,.12)}
+  .new{animation:pop .35s ease}
+  @keyframes pop{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
 
   @media (max-width:420px){
     h1{font-size:23px}
@@ -157,7 +195,10 @@
     </div>
   </div>
 </div>
-<div class="hint" id="hint">编辑模式：直接改文字，自动保存在本浏览器 · 改完点「完成」</div>
+<div class="hint" id="hint">
+  <span>编辑模式：直接改字 · 每个区块底部可「加一条待办」· 自动保存在本浏览器</span>
+  <button class="undo" id="btnUndo" type="button">↩ 还原原始版</button>
+</div>
 
 <div class="wrap">
   <header class="head">
@@ -409,8 +450,8 @@
 
   </main>
 
-  <p class="foot" data-edit="1">页面可直接编辑：点右上「✏️ 编辑」→ 改文字 / 勾选框 → 自动保存在当前浏览器。<br>
-  勾选进度只存在本机，换设备打开是原始版本；要留档点「复制」把全文粘到备忘录 / 微信收藏。<br>
+  <p class="foot" data-edit="1">页面可直接编辑：点右上「✏️ 编辑」→ 改文字 / 打勾 / 每个区块底部「＋ 加一条待办」/ 页尾「＋ 新增一条备忘」→ 自动保存在当前浏览器。<br>
+  勾选进度和改动只存在本机，换设备打开是原始版本；要留档点「复制」把全文粘到备忘录 / 微信收藏。<br>
   <span class="noprint">整理：2026-11-18 · 仅本人使用，请勿转发到公开群。</span></p>
 </div>
 
@@ -424,17 +465,30 @@
   var pbar = document.getElementById('pbar');
   var doneN = document.getElementById('doneN');
   var allN = document.getElementById('allN');
+  var btnUndo = document.getElementById('btnUndo');
+  var h1El = document.querySelector('.head h1');
+  var subEl = document.querySelector('.head .sub');
+  var footEl = document.querySelector('.foot');
   var editing = false;
   var timer = null;
 
   /* ---------- 保存 / 恢复 ---------- */
   function snapshot(){
-    var boxes = memo.querySelectorAll('.cb');
+    var c = memo.cloneNode(true);
+    var ui = c.querySelectorAll('.ui');           // 增删控件不写进存档
+    for (var j=0;j<ui.length;j++) ui[j].parentNode.removeChild(ui[j]);
+    var boxes = c.querySelectorAll('.cb');
     for (var i=0;i<boxes.length;i++){
       if (boxes[i].checked) boxes[i].setAttribute('checked','checked');
       else boxes[i].removeAttribute('checked');
     }
-    return memo.innerHTML;
+    return JSON.stringify({
+      v: 2,
+      m: c.innerHTML,
+      h: h1El ? h1El.innerHTML : '',
+      s: subEl ? subEl.innerHTML : '',
+      f: footEl ? footEl.innerHTML : ''
+    });
   }
   function save(silent){
     try{
@@ -449,10 +503,118 @@
   }
   function restore(){
     try{
-      var s = localStorage.getItem(KEY);
-      if (s && s.length > 100){ memo.innerHTML = s; return true; }
-    }catch(e){}
-    return false;
+      var raw = localStorage.getItem(KEY);
+      if (!raw || raw.length < 100) return false;
+      if (raw.charAt(0) === '{'){
+        var o = JSON.parse(raw);
+        if (o.m) memo.innerHTML = o.m;
+        if (o.h && h1El) h1El.innerHTML = o.h;
+        if (o.s && subEl) subEl.innerHTML = o.s;
+        if (o.f && footEl) footEl.innerHTML = o.f;
+      } else {
+        memo.innerHTML = raw;                     // 兼容旧存档
+      }
+      return true;
+    }catch(e){ return false; }
+  }
+
+  /* ---------- 增删控件（每次渲染后重建，不进存档） ---------- */
+  function mkTodo(text){
+    var li = document.createElement('li');
+    var cb = document.createElement('input');
+    cb.type = 'checkbox'; cb.className = 'cb';
+    var sp = document.createElement('span');
+    sp.className = 'txt'; sp.setAttribute('data-edit','1');
+    sp.textContent = text || '';
+    li.appendChild(cb); li.appendChild(sp);
+    return li;
+  }
+  function nextNum(){
+    var n = 1, nums = memo.querySelectorAll('.card .num');
+    for (var i=0;i<nums.length;i++){
+      var v = parseInt(nums[i].textContent, 10);
+      if (!isNaN(v) && v >= n) n = v + 1;
+    }
+    return n;
+  }
+  function addCard(){
+    var n = nextNum();
+    var card = document.createElement('article');
+    card.className = 'card new';
+    card.innerHTML =
+      '<div class="card-h">' +
+        '<div class="num">' + n + '</div>' +
+        '<div class="t"><h3 data-edit="1">新备忘 ' + n + '（点这里改标题）</h3>' +
+        '<p class="meta" data-edit="1">补充说明，可留空</p></div>' +
+      '</div>' +
+      '<div class="body"><ul class="todo">' +
+        '<li><input class="cb" type="checkbox"><span class="txt" data-edit="1"></span></li>' +
+      '</ul></div>';
+    memo.appendChild(card);
+    decorate();
+    if (editing){
+      var eds = card.querySelectorAll('[data-edit]');
+      for (var i=0;i<eds.length;i++) eds[i].setAttribute('contenteditable','true');
+      eds[0].focus();
+    }
+    card.scrollIntoView({behavior:'smooth', block:'center'});
+    setTimeout(function(){ card.classList.remove('new'); }, 420);
+    refreshProgress(); save();
+  }
+  function decorate(){
+    var uls = memo.querySelectorAll('ul.todo');
+    for (var i=0;i<uls.length;i++){
+      (function(ul){
+        if (!ul.nextElementSibling || !ul.nextElementSibling.classList.contains('addrow')){
+          var b = document.createElement('button');
+          b.type = 'button'; b.className = 'addrow ui'; b.textContent = '＋ 加一条待办';
+          b.addEventListener('click', function(){
+            var li = mkTodo('');
+            ul.appendChild(li);
+            var t = li.querySelector('.txt');
+            if (editing) t.setAttribute('contenteditable','true');
+            decorate(); t.focus(); save();
+          });
+          ul.parentNode.insertBefore(b, ul.nextSibling);
+        }
+        var lis = ul.querySelectorAll('li');
+        for (var k=0;k<lis.length;k++){
+          (function(li){
+            if (li.querySelector('.delrow')) return;
+            var x = document.createElement('button');
+            x.type = 'button'; x.className = 'delrow ui';
+            x.title = '删除这条'; x.textContent = '×';
+            x.addEventListener('click', function(){
+              li.parentNode.removeChild(li); refreshProgress(); save();
+            });
+            li.appendChild(x);
+          })(lis[k]);
+        }
+      })(uls[i]);
+    }
+    var cards = memo.querySelectorAll('.card');
+    for (var c=0;c<cards.length;c++){
+      (function(card){
+        if (card.querySelector('.delcard')) return;
+        var h = card.querySelector('.card-h');
+        if (!h) return;
+        var d = document.createElement('button');
+        d.type = 'button'; d.className = 'delcard ui'; d.textContent = '× 删除本条';
+        d.addEventListener('click', function(){
+          if (confirm('删除这条备忘？（误删可点顶部「↩ 还原原始版」）')){
+            card.parentNode.removeChild(card); refreshProgress(); save();
+          }
+        });
+        h.appendChild(d);
+      })(cards[c]);
+    }
+    var add = memo.querySelector('.addcard');
+    if (!add){
+      add = document.createElement('button');
+      add.type = 'button'; add.className = 'addcard ui'; add.textContent = '＋ 新增一条备忘';
+      add.addEventListener('click', addCard);
+    }
+    memo.appendChild(add);                        // 始终排在最后
   }
 
   /* ---------- 勾选进度 ---------- */
@@ -541,8 +703,16 @@
       ' 周'+wk+' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
   }
 
+  /* ---------- 还原 ---------- */
+  btnUndo.addEventListener('click', function(){
+    if (!confirm('清掉本机的全部改动和勾选，恢复成原始版？')) return;
+    try{ localStorage.removeItem(KEY); }catch(e){}
+    location.reload();
+  });
+
   /* ---------- 启动 ---------- */
   var had = restore();
+  decorate();
   applyEditable(false);
   refreshProgress();
   tick(); setInterval(tick, 30000);
