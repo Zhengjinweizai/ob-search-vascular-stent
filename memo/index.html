@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#ffffff">
+<title>求职备忘录 · 杜能 · 2026-11-18</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗒️</text></svg>">
+<style>
+  :root{
+    --bg:#f4f5f7; --card:#fff; --ink:#1c1f24; --muted:#6b7280; --line:#e6e8ec;
+    --red:#d92d20; --redbg:#fef3f2; --amber:#b54708; --amberbg:#fff8eb;
+    --blue:#175cd3; --bluebg:#eff6ff; --green:#067647; --greenbg:#eefbf3;
+    --gray:#475467; --graybg:#f2f4f7;
+    --radius:16px;
+    --shadow:0 1px 2px rgba(16,24,40,.04),0 8px 24px -12px rgba(16,24,40,.12);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.65 -apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Segoe UI",Roboto,sans-serif;
+    padding:0 0 56px;
+  }
+  .wrap{max-width:760px;margin:0 auto;padding:0 16px}
+
+  /* ---------- 顶栏 ---------- */
+  .topbar{
+    position:sticky;top:0;z-index:20;background:rgba(255,255,255,.92);
+    backdrop-filter:saturate(180%) blur(12px);-webkit-backdrop-filter:saturate(180%) blur(12px);
+    border-bottom:1px solid var(--line);
+  }
+  .topbar .wrap{display:flex;align-items:center;gap:8px;height:52px}
+  .brand{font-weight:700;font-size:15px;letter-spacing:.01em;white-space:nowrap}
+  .brand span{color:var(--muted);font-weight:500}
+  .tools{margin-left:auto;display:flex;align-items:center;gap:6px}
+  .btn{
+    appearance:none;border:1px solid var(--line);background:#fff;color:var(--gray);
+    font:inherit;font-size:13px;line-height:1;padding:9px 11px;border-radius:10px;cursor:pointer;
+    display:inline-flex;align-items:center;gap:5px;white-space:nowrap;transition:.15s;
+  }
+  .btn:active{transform:scale(.97)}
+  .btn.primary{background:#101828;border-color:#101828;color:#fff}
+  .btn.primary.on{background:var(--green);border-color:var(--green)}
+  .save{font-size:12px;color:var(--muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+  /* ---------- 头部 ---------- */
+  header.head{padding:22px 0 6px}
+  .eyebrow{font-size:12px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase}
+  h1{margin:6px 0 6px;font-size:26px;line-height:1.25;letter-spacing:-.01em}
+  .sub{color:var(--muted);font-size:14px;margin:0}
+  .progress{margin:16px 0 4px}
+  .pbar{height:8px;background:#e7e9ee;border-radius:99px;overflow:hidden}
+  .pbar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,#12b76a,#039855);border-radius:99px;transition:width .35s}
+  .pmeta{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:6px}
+
+  /* ---------- 时间线 ---------- */
+  section.block{margin:22px 0}
+  .blocktitle{display:flex;align-items:baseline;gap:8px;margin:0 0 10px;padding:0 2px}
+  .blocktitle h2{font-size:15px;margin:0;letter-spacing:.02em}
+  .blocktitle em{font-style:normal;font-size:12px;color:var(--muted)}
+
+  .tl{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+  .tl a{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;text-decoration:none;color:inherit;border-bottom:1px solid var(--line)}
+  .tl a:last-child{border-bottom:0}
+  .tl .d{flex:0 0 86px;font-variant-numeric:tabular-nums}
+  .tl .d b{display:block;font-size:13.5px;letter-spacing:-.01em;white-space:nowrap}
+  .tl .d i{font-style:normal;font-size:11px;color:var(--muted);white-space:nowrap}
+  .tl .c{flex:1;min-width:0}
+  .tl .c p{margin:0;font-size:14px;line-height:1.5}
+  .tl .c small{color:var(--muted);font-size:12px}
+  .cd{font-size:11px;font-weight:700;padding:2px 7px;border-radius:99px;white-space:nowrap}
+  .cd.now{background:var(--redbg);color:var(--red)}
+  .cd.soon{background:var(--amberbg);color:var(--amber)}
+  .cd.later{background:var(--bluebg);color:var(--blue)}
+  .cd.past{background:var(--graybg);color:var(--gray)}
+  .tl a.hot{background:linear-gradient(90deg,#fffdfd,#fff)}
+
+  /* ---------- 卡片 ---------- */
+  .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);margin:14px 0;overflow:hidden;border:1px solid transparent}
+  .card.u-red{border-color:#fda29b}
+  .card.u-amber{border-color:#fec84b}
+  .card-h{display:flex;gap:12px;align-items:flex-start;padding:16px 16px 0}
+  .num{flex:0 0 30px;height:30px;border-radius:9px;background:#f2f4f7;color:var(--gray);
+       font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:2px}
+  .card.u-red .num{background:var(--redbg);color:var(--red)}
+  .card.u-amber .num{background:var(--amberbg);color:var(--amber)}
+  .card-h .t{flex:1;min-width:0}
+  .card-h h3{margin:0;font-size:17px;line-height:1.35}
+  .card-h .meta{margin:4px 0 0;font-size:13px;color:var(--muted)}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .chip{font-size:12px;padding:3px 8px;border-radius:8px;background:var(--graybg);color:var(--gray);white-space:nowrap}
+  .chip.red{background:var(--redbg);color:var(--red);font-weight:600}
+  .chip.amber{background:var(--amberbg);color:var(--amber);font-weight:600}
+  .chip.blue{background:var(--bluebg);color:var(--blue)}
+  .chip.green{background:var(--greenbg);color:var(--green)}
+  .body{padding:12px 16px 4px}
+  .kv{display:grid;grid-template-columns:64px 1fr;gap:2px 10px;font-size:14px;margin:0 0 10px}
+  .kv dt{color:var(--muted);font-size:13px}
+  .kv dd{margin:0}
+  .note{background:#fbfcfd;border-left:3px solid var(--line);padding:8px 12px;border-radius:0 8px 8px 0;font-size:13px;color:#414651;margin:0 0 12px}
+  .note.warn{background:var(--redbg);border-left-color:#f97066;color:#912018}
+  .note.tip{background:var(--bluebg);border-left-color:#84adff;color:#1849a9}
+
+  h4.todo{font-size:13px;color:var(--muted);margin:0 0 6px;letter-spacing:.02em;font-weight:600}
+  ul.todo{list-style:none;margin:0 0 12px;padding:0}
+  ul.todo li{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px dashed var(--line);font-size:14px}
+  ul.todo li:first-child{border-top:0}
+  ul.todo .cb{
+    appearance:none;-webkit-appearance:none;flex:0 0 20px;width:20px;height:20px;margin:2px 0 0;
+    border:1.5px solid #cfd4dc;border-radius:6px;background:#fff;cursor:pointer;transition:.15s;position:relative
+  }
+  ul.todo .cb:checked{background:var(--green);border-color:var(--green)}
+  ul.todo .cb:checked::after{
+    content:"";position:absolute;left:6px;top:2px;width:5px;height:10px;
+    border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)
+  }
+  ul.todo li.done .txt{color:#98a2b3;text-decoration:line-through}
+
+  .foot{font-size:12px;color:var(--muted);line-height:1.7;margin:26px 0 0;padding:0 2px}
+  .foot a{color:var(--muted)}
+
+  /* ---------- 编辑态 ---------- */
+  body.editing [data-edit]{
+    outline:1.5px dashed #b9c0cc;outline-offset:3px;border-radius:4px;background:#fcfcfd;
+    transition:.15s;
+  }
+  body.editing [data-edit]:focus{outline-color:#2e90fa;background:#fff}
+  body.editing .cb{opacity:.5}
+  .hint{display:none;background:#101828;color:#fff;font-size:12px;padding:8px 16px;text-align:center}
+  body.editing .hint{display:block}
+
+  @media (max-width:420px){
+    h1{font-size:23px}
+    .card-h h3{font-size:16px}
+    .kv{grid-template-columns:56px 1fr}
+    .tl .d{flex-basis:78px}
+    .save{display:none}
+  }
+  @media print{
+    body{background:#fff;padding:0}
+    .topbar,.progress,.foot .noprint,.hint{display:none!important}
+    .card,.tl{box-shadow:none;border:1px solid #e6e8ec;break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="wrap">
+    <div class="brand">求职备忘录 <span>· 11/18</span></div>
+    <div class="tools">
+      <span class="save" id="save">–</span>
+      <button class="btn" id="btnCopy" type="button">复制</button>
+      <button class="btn primary" id="btnEdit" type="button">✏️ 编辑</button>
+    </div>
+  </div>
+</div>
+<div class="hint" id="hint">编辑模式：直接改文字，自动保存在本浏览器 · 改完点「完成」</div>
+
+<div class="wrap">
+  <header class="head">
+    <div class="eyebrow">TO-DO · 2026.11.18 周三 夜</div>
+    <h1 data-edit="1">杜能 · 求职备忘录</h1>
+    <p class="sub" data-edit="1">本周 3 个硬节点：明晚博迈面试 · 11/20 12:00 工行确认截止 · 11/22 上午专利笔试</p>
+
+    <div class="progress">
+      <div class="pbar"><i id="pbar"></i></div>
+      <div class="pmeta"><span>已完成 <b id="doneN">0</b> / <b id="allN">0</b> 项</span><span id="clock"></span></div>
+    </div>
+  </header>
+
+  <!-- ========== 时间线 ========== -->
+  <section class="block">
+    <div class="blocktitle"><h2>接下来怎么走</h2><em>点一行跳到详情</em></div>
+    <div class="tl" id="tl">
+      <a href="#c2" class="hot">
+        <div class="d"><b>11/19</b><i>周四</i></div>
+        <div class="c"><p>博迈医疗 · 研发工程师（金属材料）· <b>15:30 视频面试</b></p><small>提前 10 分钟进会议</small></div>
+        <span class="cd" data-due="2026-11-19T15:30:00+08:00">–</span>
+      </a>
+      <a href="#c3">
+        <div class="d"><b>11/20</b><i>周五 12:00</i></div>
+        <div class="c"><p>工行广西分行 · 回短信确认「参加」</p><small>过期=自动放弃面试</small></div>
+        <span class="cd" data-due="2026-11-20T12:00:00+08:00">–</span>
+      </a>
+      <a href="#c4">
+        <div class="d"><b>11/22</b><i>周日</i></div>
+        <div class="c"><p>审协广东中心 · 专利审查员 <b>线上笔试</b></p><small>今日 16:00 前须交问卷星（见详情）</small></div>
+        <span class="cd" data-due="2026-11-22T09:30:00+08:00">–</span>
+      </a>
+      <a href="#c3">
+        <div class="d"><b>11/26–28</b><i>周四–周六</i></div>
+        <div class="c"><p>工行广西分行 · <b>线下面试（南宁）</b></p><small>仅线下面试，行程要提前订</small></div>
+        <span class="cd" data-due="2026-11-26T09:00:00+08:00">–</span>
+      </a>
+      <a href="#c1">
+        <div class="d"><b>12/07–11</b><i>周一–周五</i></div>
+        <div class="c"><p>新东方杭州 · 5 天沉浸式培训营</p><small>杭州西湖区文鼎校区 · 考核过当天发 offer</small></div>
+        <span class="cd" data-due="2026-12-07T09:00:00+08:00">–</span>
+      </a>
+      <a href="#c5">
+        <div class="d"><b>2027 年后</b><i>春节后</i></div>
+        <div class="c"><p>佰仁医疗 · 面试复盘 + 再跟进</p><small>约 2 月中下旬</small></div>
+        <span class="cd" data-due="2027-02-20T09:00:00+08:00">–</span>
+      </a>
+      <a href="#c6">
+        <div class="d"><b>07/31</b><i>2027 最迟</i></div>
+        <div class="c"><p>招行深圳 · 运营柜员岗 最迟报到日</p><small>逾期视为自动放弃录用</small></div>
+        <span class="cd" data-due="2027-07-31T18:00:00+08:00">–</span>
+      </a>
+    </div>
+  </section>
+
+  <main id="memo">
+
+  <!-- ========== 1 新东方 ========== -->
+  <article class="card u-blue" id="c1">
+    <div class="card-h">
+      <div class="num">1</div>
+      <div class="t">
+        <h3 data-edit="1">新东方 · 杭州教师培训营 <span style="font-weight:500;color:#6b7280">（报考确认）</span></h3>
+        <p class="meta" data-edit="1">5 天沉浸式线下集训 · 集训即终面</p>
+        <div class="chips">
+          <span class="chip blue">12/07 周一 – 12/11 周五</span>
+          <span class="chip">杭州 · 西湖区文鼎校区</span>
+          <span class="chip green">路费 + 食宿全报销</span>
+        </div>
+      </div>
+    </div>
+    <div class="body">
+      <dl class="kv">
+        <dt>时间</dt><dd data-edit="1">12 月 7 日（周一）— 12 月 11 日（周五），共 5 天</dd>
+        <dt>地点</dt><dd data-edit="1">杭州 · 西湖区文鼎校区（线下）</dd>
+        <dt>费用</dt><dd data-edit="1">往返路费 + 培训期间食宿全部报销，零成本参与</dd>
+        <dt>结果</dt><dd data-edit="1">全程参与并通过考核 → <b>当天直接发新东方教师 offer</b></dd>
+      </dl>
+      <p class="note" data-edit="1"><b>能学到什么</b>：① 职场能力（职业素养 / 沟通表达 / 课堂控场 / 学生管理）② 资深培训师全程 1v1 带教 ③ 大量磨课、试讲、点评、复盘 ④ 西湖户外拓展</p>
+      <h4 class="todo">待办</h4>
+      <ul class="todo">
+        <li><input class="cb" type="checkbox"><span class="txt" data-edit="1">回复 HR：【姓名 + 确认参加】</span></li>
+        <li><input class="cb" type="checkbox"><span class="txt" data-edit="1">扫海报上的二维码，填写参训回执</span></li>
+        <li><input class="cb" type="checkbox"><span class="txt" data-edit="1">查收邮箱里的「培训营邀请邮件」，核对报到细节</span></li>
+        <li><input class="cb" type="checkbox"><span class="txt" data-edit="1">请假 / 排开 12/07–12/11 全部行程（这周不能接别的面试）</span></li>
+        <li><input class="cb" type="checkbox"><span class="txt" data-edit="1">订杭州往返票，留存报销凭证（车票 / 发票 / 酒店水单）</span></li>
+      </ul>
+    </div>
+  </article>
+
+  <!-- ========== 2 博迈 ========== -->
+  <article class="card u-red" id="c2">
+    <div class="card-h">
+      <div class="num">2</div>
+      <div class="t">
+        <h3 data-edit="1">博迈医疗 · 研发工程师（金属材料方向）</h3>
+        <p class="meta" data-edit="1">【27 届校招】第一轮面试 · 视频 · 约 30 分钟</p>
+        <div class="chips">
+          <span class="chip red">明天 11/19 周四 15:30</span>
+          <span class="chip">腾讯会议</span>
+          <span class="chip">可能延长，留缓冲</span>
+        </div>
+      </div>
+    </div>
+    <div class="body">
+      <dl class="kv">
+        <dt>时间</dt><dd data-edit="1"><b>2026 年 11 月 19 日（周四）15:30</b>，约 30 分钟</dd>
+        <dt>形式</dt><dd data-edit="1">视频面试 · 腾讯会议（会议号 625 246 941，入会链接见原邮件）</dd>
+        <dt>联系人</dt><dd data-edit="1">赵梦佳（HR）</dd>
+      </dl>
+      <p class="note warn" data-edit="1"><b>提前 10 分钟</b>进会议：开摄像头、麦克风试音、背景干净、光线朝脸。手机装腾讯会议 App 备用，家里网络不稳就切热点。</p>
+      <h4 class="todo">待办 &amp; 准备</h4>
+      <ul class="todo">
+        <li><input class="cb" type="checkbox"><span class="txt" data-edit="1">把原邮件里的会议链接点开一次，确认能进、会议号对得上</span></li>
+        <li><input class="cb" type="checkbox"><span class="txt" data-edit="1">3 分钟自我介绍（背到能自然说，不要念稿）</span></li>
+        <li><input class="cb" type="checkbox"><span class="txt" data-edit="1">讲透 3 件事：镍钛支架结构设计 → 热处理工艺跟产（3 套参数）→ 体外测试 200+ 组数据</span></li>
+        <li><input class="cb" type="checkbox"><span class="txt" data-edit="1">准备一个反问：研发岗 base 在东莞还是深圳？（本人意向深圳，必须问清）</span></li>
+        <li><input class="cb" type="checkbox"><span class="txt" data-edit="1">弱项不装：没做过球囊 → 讲「植入器械通用评价能力 + YY 0285.4 标准迁移」，别硬吹</span></li>
+        <li><input class="cb" type="checkbox"><span class="txt" data-edit="1">简历 PDF 打印一份放手边，面试官问到哪指到哪</span></li>
+      </ul>
+    </div>
+  </article>
+
+  <!-- ========== 3 工行 ========== -->
+  <article class="card u-amber" id="c3">
+    <div class="card-h">
+      <div class="num">3</div>
+      <div class="t">
+        <h3 data-edit="1">中国工商银行 · 广西分行 <span style="font-weight:500;color:#6b7280">（2027 校招面试）</span></h3>
+        <p class="meta" data-edit="1">岗位：广西柳州分行 — 客户经理（城区）</p>
+        <div class="chips">
+          <span class="chip amber">11/20 周五 12:00 前必须确认</span>
+          <span class="chip">11/26–28 南宁线下面试</span>
+        </div>
+      </div>
+    </div>
+    <div class="body">
+      <dl class="kv">
+        <dt>岗位</dt><dd data-edit="1">广西柳州分行 — 客户经理（城区）</dd>
+        <dt>确认</dt><dd data-edit="1"><b>11 月 20 日 12:00 前</b>：回复短信「姓名 + 参加 / 放弃」，或点邮件里的链接完成确认。<b>直接回复邮件无效</b></dd>
+        <dt>面试</dt><dd data-edit="1">预计 2026 年 11 月 26 日 — 28 日，<b>仅线下面试</b>，地点：广西南宁市</dd>
+        <dt>后续</dt><dd data-edit="1">具体时间以短信 / 邮件 / 电话通知为准，保持手机畅通</dd>
+      </dl>
+      <p class="note warn" data-edit="1"><b>这是本周唯一的硬截止</b>：确认短信没回 = 自动放弃。今明两天内务必回掉，回完在这一行打勾。</p>
+      <h4 class="todo">待办</h4>
+      <ul class="todo">
+        <li><input class="cb" type="checkbox"><span class="txt" data-edit="1">回复确认短信「杜能 + 参加」（或点邮件里的确认链接）</span></li>
+        <li><input class="cb" type="checkbox"><span class="txt" data-edit="1">订南宁往返：建议 11/25 到、11/28 后返，住宿订在面试点附近</span></li>
+        <li><input class="cb" type="checkbox"><span class="txt" data-edit="1">准备客户经理面试：营销意识 / 服务案例 / 为什么选工行·选广西 / 能不能长期留广西</span></li>
+        <li><input class="cb" type="checkbox"><span class="txt" data-edit="1">正装 + 证件（身份证 / 学生证 / 简历纸质版）+ 学历证明</span></li>
+        <li><input class="cb" type="checkbox"><span class="txt" data-edit="1">顺手：工行网银改一次密码（近日两次收到登录验证码，不像本人操作）</span></li>
+      </ul>
+    </div>
+  </article>
+
+  <!-- ========== 4 专利 ========== -->
+  <article class="card u-red" id="c4">
+    <div class="card-h">
+      <div class="num">4</div>
+      <div class="t">
+        <h3 data-edit="1">审协广东中心 · 专利审查员 <span style="font-weight:500;color:#6b7280">（第一批笔试）</span></h3>
+        <p class="meta" data-edit="1">2027 年公开招聘 · 线上笔试</p>
+        <div class="chips">
+          <span class="chip red">周日 11/22 9:30–12:00</span>
+          <span class="chip">线上</span>
+          <span class="chip amber">今日 16:00 前交问卷星</span>
+        </div>
+      </div>
+    </div>
+    <div class="body">
+      <dl class="kv">
+        <dt>时间</dt><dd data-edit="1">2026 年 11 月 22 日（周日）上午 <b>9:30 — 12:00</b></dd>
+        <dt>形式</dt><dd data-edit="1">线上笔试（在家 / 安静独立空间）</dd>
+        <dt>公告</dt><dd data-edit="1">以「审协广东中心」官方微信公众号的笔试公告为准</dd>
+      </dl>
+      <p class="note warn" data-edit="1"><b>★ 最紧急的一条</b>：邮件要求 <b>11 月 18 日 16:00 前</b>填问卷星反馈是否参加第一批笔试。今天已过点 —— 如果没交，明天一早立刻补交，并打考务电话说明情况，别等系统关了口。<br>考务电话：020-22692860 转 88406 / 88434（9:00–18:00）。</p>
+      <p class="note tip" data-edit="1"><b>双卡双待手机</b>：务必把报考用的那个手机号放到<b>主卡槽</b>，否则收不到考试相关短信。</p>
+      <h4 class="todo">待办</h4>
+      <ul class="todo">
+        <li><input class="cb" type="checkbox"><span class="txt" data-edit="1">确认问卷星已提交（没交 → 明天上午第一件事补交 + 打电话）</span></li>
+        <li><input class="cb" type="checkbox"><span class="txt" data-edit="1">手机主卡槽换成报考号，保持畅通、别静音</span></li>
+        <li><input class="cb" type="checkbox"><span class="txt" data-edit="1">周日 8:30 前测：电脑 / 摄像头 / 网络 / 备用热点 / 充电器</span></li>
+        <li><input class="cb" type="checkbox"><span class="txt" data-edit="1">9:00 前登录候考，桌面清空、证件放手边</span></li>
+        <li><input class="cb" type="checkbox"><span class="txt" data-edit="1">前一天早点睡（周日 9:30 开考，别熬夜）</span></li>
+      </ul>
+    </div>
+  </article>
+
+  <!-- ========== 5 佰仁 ========== -->
+  <article class="card" id="c5">
+    <div class="card-h">
+      <div class="num">5</div>
+      <div class="t">
+        <h3 data-edit="1">佰仁医疗 <span style="font-weight:500;color:#6b7280">（明年年后跟进）</span></h3>
+        <p class="meta" data-edit="1">北京 · 人工心脏瓣膜 / 先心病植介入</p>
+        <div class="chips">
+          <span class="chip">2027 春节后 · 约 2 月中下旬</span>
+          <span class="chip">助理职级 · 落户跳板待定</span>
+        </div>
+      </div>
+    </div>
+    <div class="body">
+      <dl class="kv">
+        <dt>节点</dt><dd data-edit="1">明年（2027）春节后主动跟进，别等到招聘季结束</dd>
+        <dt>核心</dt><dd data-edit="1">这个岗是「助理 + 执行型日常」，18 个月内拿不到独立写方案的机会就会被定型</dd>
+      </dl>
+      <p class="note" data-edit="1"><b>落户口径要记牢</b>：国内硕士是「择优」落户，不是承诺解决；博士 / 留学硕士才是「解决」。计划单列走不通（北工大双一流学科=土木）。工作居住证 ≠ 户口（不能高考、离职失效）。</p>
+      <h4 class="todo">待办（年后启动）</h4>
+      <ul class="todo">
+        <li><input class="cb" type="checkbox"><span class="txt" data-edit="1">写面试复盘：上次被问到的每个问题 + 当时怎么答 + 应该怎么答</span></li>
+        <li><input class="cb" type="checkbox"><span class="txt" data-edit="1">想清楚 5 个决定性问题（职级 / 独立写方案的时间 / 落户是「择优」还是「解决」/ 直接上级 / 转岗机制）</span></li>
+        <li><input class="cb" type="checkbox"><span class="txt" data-edit="1">春节后主动发一封跟进邮件，附最新简历（六级已通过，JD 硬门槛满足）</span></li>
+        <li><input class="cb" type="checkbox"><span class="txt" data-edit="1">决策：为落户去（C）/ 当跳板（B+）/ 长期做（B−）—— 到时要敢选</span></li>
+      </ul>
+    </div>
+  </article>
+
+  <!-- ========== 6 招行 ========== -->
+  <article class="card u-amber" id="c6">
+    <div class="card-h">
+      <div class="num">6</div>
+      <div class="t">
+        <h3 data-edit="1">招商银行 · 深圳分行 <span style="font-weight:500;color:#6b7280">（录用）</span></h3>
+        <p class="meta" data-edit="1">2027 校园招聘 · 运营柜员岗 · 工作地深圳</p>
+        <div class="chips">
+          <span class="chip green">已录用</span>
+          <span class="chip amber">待核实 + 待办手续</span>
+          <span class="chip">最迟 2027/07/31 报到</span>
+        </div>
+      </div>
+    </div>
+    <div class="body">
+      <dl class="kv">
+        <dt>通知</dt><dd data-edit="1">2026-11-15 收到「录用通知」邮件（智联校招平台代发）</dd>
+        <dt>岗位</dt><dd data-edit="1">运营柜员岗，工作地深圳，正式员工</dd>
+        <dt>报到</dt><dd data-edit="1"><b>最迟 2027 年 7 月 31 日</b>入职，逾期视为自动放弃录用</dd>
+      </dl>
+      <p class="note warn" data-edit="1"><b>两点要办</b>：① 确认 11/15 20:00 前那封「是否接受录用」的问卷<b>已经提交成功</b>（没交就立刻联系 HR 补）；② 邮件是从智联平台域名代发的，不是 cmbchina 官方域名 —— 用招行校招官网 / 官方客服电话二次核实，别在陌生页面填身份证、银行卡、验证码。</p>
+      <h4 class="todo">待办</h4>
+      <ul class="todo">
+        <li><input class="cb" type="checkbox"><span class="txt" data-edit="1">确认录用问卷已提交（11/15 20:00 那条），截图留证</span></li>
+        <li><input class="cb" type="checkbox"><span class="txt" data-edit="1">通过官方渠道核实录用通知真伪（校招官网 / 95555 转校招），确认后再办任何手续</span></li>
+        <li><input class="cb" type="checkbox"><span class="txt" data-edit="1">等纸质《录用通知书》快递 + 电子版邮件，核对岗位 / 地点 / 薪资 / 报到时间</span></li>
+        <li><input class="cb" type="checkbox"><span class="txt" data-edit="1">按邮件清单准备入职材料（三方协议 / 学历学位 / 体检 / 政审等）</span></li>
+        <li><input class="cb" type="checkbox"><span class="txt" data-edit="1">和家里对齐：深圳柜员岗 vs 北京研发岗 vs 新东方，最后签哪个</span></li>
+      </ul>
+    </div>
+  </article>
+
+  </main>
+
+  <p class="foot" data-edit="1">页面可直接编辑：点右上「✏️ 编辑」→ 改文字 / 勾选框 → 自动保存在当前浏览器。<br>
+  勾选进度只存在本机，换设备打开是原始版本；要留档点「复制」把全文粘到备忘录 / 微信收藏。<br>
+  <span class="noprint">整理：2026-11-18 · 仅本人使用，请勿转发到公开群。</span></p>
+</div>
+
+<script>
+(function(){
+  var KEY = 'dn-memo-2026-11-18-v1';
+  var memo = document.getElementById('memo');
+  var saveEl = document.getElementById('save');
+  var btnEdit = document.getElementById('btnEdit');
+  var btnCopy = document.getElementById('btnCopy');
+  var pbar = document.getElementById('pbar');
+  var doneN = document.getElementById('doneN');
+  var allN = document.getElementById('allN');
+  var editing = false;
+  var timer = null;
+
+  /* ---------- 保存 / 恢复 ---------- */
+  function snapshot(){
+    var boxes = memo.querySelectorAll('.cb');
+    for (var i=0;i<boxes.length;i++){
+      if (boxes[i].checked) boxes[i].setAttribute('checked','checked');
+      else boxes[i].removeAttribute('checked');
+    }
+    return memo.innerHTML;
+  }
+  function save(silent){
+    try{
+      localStorage.setItem(KEY, snapshot());
+      var d = new Date();
+      saveEl.textContent = '已存 ' + ('0'+d.getHours()).slice(-2) + ':' + ('0'+d.getMinutes()).slice(-2);
+    }catch(e){ if(!silent) saveEl.textContent = '保存失败'; }
+  }
+  function queueSave(){
+    clearTimeout(timer);
+    timer = setTimeout(save, 500);
+  }
+  function restore(){
+    try{
+      var s = localStorage.getItem(KEY);
+      if (s && s.length > 100){ memo.innerHTML = s; return true; }
+    }catch(e){}
+    return false;
+  }
+
+  /* ---------- 勾选进度 ---------- */
+  function refreshProgress(){
+    var boxes = memo.querySelectorAll('.cb');
+    var done = 0;
+    for (var i=0;i<boxes.length;i++){
+      var li = boxes[i].closest('li');
+      if (boxes[i].checked){ done++; if(li) li.classList.add('done'); }
+      else if(li) li.classList.remove('done');
+    }
+    allN.textContent = boxes.length;
+    doneN.textContent = done;
+    pbar.style.width = boxes.length ? (done/boxes.length*100).toFixed(1)+'%' : '0%';
+  }
+
+  /* ---------- 编辑模式 ---------- */
+  function applyEditable(on){
+    var els = document.querySelectorAll('[data-edit]');
+    for(var i=0;i<els.length;i++){
+      if (on) els[i].setAttribute('contenteditable','true');
+      else els[i].removeAttribute('contenteditable');
+    }
+    document.body.classList.toggle('editing', on);
+    btnEdit.textContent = on ? '✓ 完成' : '✏️ 编辑';
+    btnEdit.classList.toggle('on', on);
+    if (!on) { save(); }
+  }
+  btnEdit.addEventListener('click', function(){
+    editing = !editing;
+    applyEditable(editing);
+  });
+
+  /* ---------- 输入即存 ---------- */
+  memo.addEventListener('input', queueSave);
+  memo.addEventListener('change', function(e){
+    if (e.target.classList && e.target.classList.contains('cb')){
+      refreshProgress(); save();
+    }
+  });
+  // 编辑时回车 → 换行不产生新块
+  document.addEventListener('keydown', function(e){
+    if (editing && e.key === 'Enter' && e.target.isContentEditable){
+      e.preventDefault();
+      document.execCommand('insertLineBreak');
+      queueSave();
+    }
+  });
+
+  /* ---------- 复制全文 ---------- */
+  btnCopy.addEventListener('click', function(){
+    var txt = document.querySelector('.wrap').innerText.replace(/\n{3,}/g,'\n\n');
+    function done(){ btnCopy.textContent='已复制'; setTimeout(function(){btnCopy.textContent='复制';},1400); }
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt).then(done, fallback);
+    } else { fallback(); }
+    function fallback(){
+      var ta = document.createElement('textarea');
+      ta.value = txt; ta.style.position='fixed'; ta.style.opacity='0';
+      document.body.appendChild(ta); ta.select();
+      try{ document.execCommand('copy'); done(); }catch(e){ btnCopy.textContent='长按选择'; }
+      document.body.removeChild(ta);
+    }
+  });
+
+  /* ---------- 倒计时 ---------- */
+  function tick(){
+    var now = Date.now();
+    var nodes = document.querySelectorAll('[data-due]');
+    for (var i=0;i<nodes.length;i++){
+      var t = Date.parse(nodes[i].getAttribute('data-due'));
+      var ms = t - now, h = ms/3600000, label, cls;
+      if (ms < 0){ label='已过'; cls='past'; }
+      else if (h < 12){ label='今天'; cls='now'; }
+      else if (h < 36){ label='明天'; cls='now'; }
+      else if (h < 96){ label=Math.ceil(h/24)+' 天后'; cls='soon'; }
+      else if (h < 24*30){ label=Math.round(h/24)+' 天后'; cls='later'; }
+      else { label=Math.round(h/24/30)+' 个月后'; cls='later'; }
+      nodes[i].textContent = label;
+      nodes[i].className = 'cd ' + cls;
+    }
+    var d = new Date();
+    var wk = '日一二三四五六'[d.getDay()];
+    document.getElementById('clock').textContent =
+      d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2)+
+      ' 周'+wk+' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);
+  }
+
+  /* ---------- 启动 ---------- */
+  var had = restore();
+  applyEditable(false);
+  refreshProgress();
+  tick(); setInterval(tick, 30000);
+  saveEl.textContent = had ? '本地版' : '原始版';
+})();
+</script>
+</body>
+</html>
